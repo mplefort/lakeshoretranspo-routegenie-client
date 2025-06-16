@@ -1,0 +1,12 @@
+Design a program structure for a nodejs application for automating a Non-emergency medical transporation company's invoice creation, billing follow up of authorization requests to case managers from payer groups, and posting authorization numbers to the major payer groups websites. Major payer groups are My Choice Wisconsin, Community Care, and Inclusa. The appplication will have the following main features: 
+
+1. Interface with Routegenie API for pulling custom built reports by name as .csv files
+2. Route genie data filtering, grouping, and reformatting csvs into a quickbooks online invoice spreadsheet for bulk uploading. This will be the initial method. Plan for the future method of uploading and creating invoices in bulk via a quickbooks online API.
+3. Interface for Quickbooks Online API for posting new invoices from route genie data. Also pulling invoices in bulk organized by payer group (My Choice Wisconsin, Community Care, or Inclusa) and sub categorized by their case worker.
+4. A user interface to a help a user pull the correct report and initiate the scripts for these automations.
+
+Describe the best layout program structure for this application, recommended packages and libraries, and tools to help automate the process further. Start with the structure, as we work we will begin to build out this program together. The first priority is to create a minimal script to automate pulling route genie orders and creating the formatted .csv file for quickbooks invoice bulk creation. Route genie reports will provide details such as the "Headers here". The service codes and modifies are for each leg of a trip and will need to match their product/service name in quickbooks. Given this list of Headers and some sample service codes and modifies from routegenie report, aggregate the data for matching passenger first, last name, and email on their matching codes for mileage, load fees, no show, cancelation, after hour/holiday mileage and trip fees, etc. These service codes created via the route genie report are required to match a service/product code in quickbooks in order to aggregate on. 
+
+Quickbooks service/product codes:
+
+Example route genie service codes billing report for 1 week of data:

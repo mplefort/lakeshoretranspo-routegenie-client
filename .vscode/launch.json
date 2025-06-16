@@ -4,15 +4,33 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
-            "skipFiles": [
-                "<node_internals>/**"
+            "name": "Debug pullRouteGenie",
+            "program": "${workspaceFolder}/src/commands/pullRouteGenie.ts",
+            "args": [
+            "05/25/2025", "06/14/2025" 
             ],
-            "program": "${workspaceFolder}\\auth.js"
+            "runtimeArgs": [
+            "-r",
+            "ts-node/register"
+            ],
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug buildInvoices",
+            "program": "${workspaceFolder}/src/commands/buildInvoices.ts",
+            "args": [
+                "${workspaceFolder}/reports/billing/2025_05_25-2025_06_14_billing.csv"
+            ],
+            "runtimeArgs": [
+                "-r",
+                "ts-node/register"
+            ],
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }
