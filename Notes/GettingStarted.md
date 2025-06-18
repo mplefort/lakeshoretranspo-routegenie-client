@@ -18,11 +18,17 @@ Before we dive into that thought could you tell me a little about how you plan t
 
 ## invoiceBuilder.ts
 1. if Order no show then all other service codeds costs removed? Or charge for full ride + no show?
+- No show needs to remove all other codes. This is done. Only inclusa charges a no show service code.
 
-2. Set Dead Miles free to 0.01. If over 15 miles dead miles then 
+2. Set Dead Miles free to 0.01. If over 15 miles dead miles then charge them for all but Inclusa. Inclusa charge all dead miles.
 
-3. Record mileage from mapped miles for cost
+3. Invoice group by passengers and payers. If 1 passenger has 2 payers in same period. Create two different invoices.
 
+4. IF payer is PP, overwrite billing frequency to be Daily.
+
+5. Query list of product services to check service code exists in Quickbooks
+
+6. Query list of passengers with reoccuring invoices to not upload over.
 
 
 
@@ -58,23 +64,13 @@ only on no shows
 
 7. **Dead miles** will not be recorded unless the Free dead mile distance exceeds the limit. Then all miles are recorded for cost. Do we want to charge all dead miles then only record for QB 
 
+8. Multi Payers - Same Passenger: Orders 5043, 8582 Keith Proefrock. Has private pay and Shepherd Premier. How should these be invoiced. Ans: Separate payers need separate invoices
+
 ## To ask RG issues
-Zip codes for MCW RD Dead Miles
-53073
-53081-53083
-53085
-
-Zip Codes for MCW RI Dead Miles
-53044
-53073
-53081-53083
-53085
-
-order id #6511/1091 - 13 order mileage vs 16 mapped miles? why would actual be less then mapped? need to use mapped if actual less then mapped
-
-#3812/ - charged 22 dead miles for cc for 22 mi trip
 
 #1095 Whats deadhead mileage vs dead miles?
 
 1095 has 9 dead miles for testing
 5634 has 16 dead miles for testing
+Sol: dead miles will be calculated in script. All dead miles recorddd from 0. IF less then 15 miles do not charge MCW/CC. Charge all dead miles to Inclusa and other payers.
+

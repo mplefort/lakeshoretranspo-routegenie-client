@@ -31,8 +31,8 @@ function formatDateForFile(dateStr: string): string {
 async function downloadCsvWhenReady(csvUrl: string, filePath: string): Promise<void> {
   const wait = (ms: number) => new Promise(res => setTimeout(res, ms));
   let attempt = 1;
+  console.log(`⬇️ Attempt to download CSV to ${filePath}`);
   while (true) {
-    console.log(`⬇️ Attempt ${attempt}: Downloading CSV to ${filePath}`);
     const dl = await axios.get(csvUrl, { responseType: 'stream' });
     // Save the downloaded file to disk
     await new Promise((resolve, reject) => {
@@ -48,8 +48,8 @@ async function downloadCsvWhenReady(csvUrl: string, filePath: string): Promise<v
       console.log('✅ Report ready.');
       break; // Exit loop if the file is a real CSV
     }
-    console.log('⏳ Still generating; retrying in 5s...');
-    await wait(5000); // Wait 5 seconds before retrying
+    console.log('⏳ Still generating; retrying in 10s...');
+    await wait(10000); // Wait 10 seconds before retrying
     attempt++;
   }
 }
@@ -76,7 +76,7 @@ export async function generateBillingReport(
   // Request the report to be generated for the given period
   const gen = await axios.post(
     `${RG_HOST}/open_api/api/v1/report/`,
-    { name: 'Billing Template Report', creator: RG_USER_ID, template: template.id, period_from: periodFrom, period_to: periodTo },
+    { name: 'Weekly Billing Report', creator: RG_USER_ID, template: template.id, period_from: periodFrom, period_to: periodTo },
     { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
   );
 

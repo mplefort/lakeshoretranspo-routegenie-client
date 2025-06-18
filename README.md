@@ -2,7 +2,7 @@
 
 A Node.js client for RouteGenie API using Axios and OAuth2 client_credentials.
 
-ne-mt-invoicer/
+lakeshoretranspo-routegenie-client/
 │
 ├── src/
 │   ├── config/                # environment, constants, mappings

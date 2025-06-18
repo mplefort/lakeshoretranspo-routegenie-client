@@ -1,0 +1,93 @@
+Post?,Invoice/Bill Date,Due Date,Invoice / Bill Number,Transaction Type,Customer,Vendor,Currency Code,Product/Services,Description,Qty,Discount %,Unit Price,Category,Location,Class,Tax,Payment/Receipt Reference,Payment/Receip Date,Payment/Receipt Account,Payment/Receip Amount,Payer,Invoice Billing Status,Authorizations 1,Billing Frequency
+Yes,6/18/2025,7/18/2025,43640,Invoice,"MORTON, KEVIN",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",8,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43640,Invoice,"MORTON, KEVIN",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",1,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43641,Invoice,"BRIGGS, ANNE",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",18,,2,,,,no,,,,,Community Care,,1559876,
+Yes,6/18/2025,7/18/2025,43641,Invoice,"BRIGGS, ANNE",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,,1559876,
+Yes,6/18/2025,7/18/2025,43642,Invoice,"VREEKE, DEREK",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",8,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43642,Invoice,"VREEKE, DEREK",,USD,T2003-RI-C1-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Wheelchair (C1)",1,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43643,Invoice,"MULLEN, SEAN",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",24,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43643,Invoice,"MULLEN, SEAN",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43644,Invoice,"LINSKI, STEPHEN",,USD,S0215-RI-U7-MCW,My Choice Wisconsin: Non-Medical (RI) - Loaded Mileage per Passenger,12,,1.60,,,,no,,,,,My Choice Wisconsin,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43644,Invoice,"LINSKI, STEPHEN",,USD,T2003-RI-MCW,My Choice Wisconsin: Non-Medical (RI) - Trip - One Way,1,,23,,,,no,,,,,My Choice Wisconsin,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43645,Invoice,"PETZOLD, SARAH",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",14,,2,,,,no,,,,,Community Care,,1537973,Weekly
+Yes,6/18/2025,7/18/2025,43645,Invoice,"PETZOLD, SARAH",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",1,,20,,,,no,,,,,Community Care,,1537973,Weekly
+Yes,6/18/2025,7/18/2025,43646,Invoice,"BENKOWSKI, ANN",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",20,,2,,,,no,,,,,Community Care,,1574847,
+Yes,6/18/2025,7/18/2025,43646,Invoice,"BENKOWSKI, ANN",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,,1574847,
+Yes,6/18/2025,7/18/2025,43647,Invoice,"MARTIN, ROBERT",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,Authorization Needed,,Monthly
+Yes,6/18/2025,7/18/2025,43648,Invoice,"PFEIFER, KYLE",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",18,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43648,Invoice,"PFEIFER, KYLE",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43649,Invoice,"- TOOTIE BACKHAUS, CASSANDRA",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43650,Invoice,"XIONG, DAVID",,USD,T2003-RI-MCW,My Choice Wisconsin: Non-Medical (RI) - Trip - One Way,2,,23,,,,no,,,,,My Choice Wisconsin,,6316232,
+Yes,6/18/2025,7/18/2025,43651,Invoice,"MEINNERT, MICHAEL",,USD,T2003-RI-MCW,My Choice Wisconsin: Non-Medical (RI) - Trip - One Way,2,,23,,,,no,,,,,My Choice Wisconsin,,6359774,
+Yes,6/18/2025,7/18/2025,43652,Invoice,"NATTINGER, SARA",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",1,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43653,Invoice,"DIPPEL, BRANDON",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",17,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43653,Invoice,"DIPPEL, BRANDON",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",3,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43654,Invoice,"VANG, YANGPAO",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43655,Invoice,"VOSS, ISAIAH",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",9,,2,,,,no,,,,,Community Care,,1536772,Monthly
+Yes,6/18/2025,7/18/2025,43655,Invoice,"VOSS, ISAIAH",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",1,,20,,,,no,,,,,Community Care,,1536772,Monthly
+Yes,6/18/2025,7/18/2025,43656,Invoice,"REYES, CHRISTINE",,USD,S0215-RI-U7-MCW,My Choice Wisconsin: Non-Medical (RI) - Loaded Mileage per Passenger,8,,1.60,,,,no,,,,,My Choice Wisconsin,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43656,Invoice,"REYES, CHRISTINE",,USD,T2003-RI-MCW,My Choice Wisconsin: Non-Medical (RI) - Trip - One Way,1,,23,,,,no,,,,,My Choice Wisconsin,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43656,Invoice,"REYES, CHRISTINE",,USD,S0215-RI-U7TP-MCW,My Choice Wisconsin: Non-Medical (RI) - Unloaded Mileage (U7TP) per Passenger,16,,1,,,,no,,,,,My Choice Wisconsin,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43657,Invoice,"MILLER, AMANDA",,USD,T2003-RI-MCW,My Choice Wisconsin: Non-Medical (RI) - Trip - One Way,2,,23,,,,no,,,,,My Choice Wisconsin,,6366043,
+Yes,6/18/2025,7/18/2025,43658,Invoice,"CRAWFORD, MAUREEN",,USD,T2003-RD-CC,"Community Care: Medical (RD) TRIP - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43659,Invoice,"GASPARD, CARROLL",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43660,Invoice,"NORLANDER, ISAIAH",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",11,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43660,Invoice,"NORLANDER, ISAIAH",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",1,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43661,Invoice,"WALLER, STEPHEN",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",11,,2,,,,no,,,,,Community Care,,1548495,
+Yes,6/18/2025,7/18/2025,43661,Invoice,"WALLER, STEPHEN",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",1,,20,,,,no,,,,,Community Care,,1548495,
+Yes,6/18/2025,7/18/2025,43662,Invoice,"TREVINO, REYNALDO",,USD,T2003-RI-A-I,Inclusa: Non-Medical (RI) - Trip - One Way - Ambulatory,2,,19.95,,,,no,,,,,Inclusa,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43662,Invoice,"TREVINO, REYNALDO",,USD,S0215-RI-I,Inclusa: Non-Medical (RI) - LOADED Mileage,4,,1.37,,,,no,,,,,Inclusa,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43662,Invoice,"TREVINO, REYNALDO",,USD,S0215-RI-TP-I,Inclusa: Non-Medical (RI) - Per Unloaded Mile (TP),21,,0.80,,,,no,,,,,Inclusa,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43663,Invoice,"RONN, CHERYL",,USD,S0215-RD-U7-MCW,My Choice Wisconsin: Medical (RD) - Loaded Mileage per Passenger,19,,1.60,,,,no,,,,,My Choice Wisconsin,,"6464044,6464042,6464040",
+Yes,6/18/2025,7/18/2025,43663,Invoice,"RONN, CHERYL",,USD,T2003-RD-MCW,My Choice Wisconsin: Medical (RD) - Trip - One Way,2,,23,,,,no,,,,,My Choice Wisconsin,,"6464044,6464042,6464040",
+Yes,6/18/2025,7/18/2025,43664,Invoice,"VANDERWAAL, EMMA",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",16,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43664,Invoice,"VANDERWAAL, EMMA",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43664,Invoice,"VANDERWAAL, EMMA",,USD,S0215-RI-C1-CC,"Community Care: Non-Medical (RI) - Per Unloaded Mile, Non-Loaded Mileage",15,,0.48,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43665,Invoice,"LAWRENZ, SCOTT",,USD,T2003-RI-MCW,My Choice Wisconsin: Non-Medical (RI) - Trip - One Way,2,,23,,,,no,,,,,My Choice Wisconsin,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43666,Invoice,"ADAMS, JOSH",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",3,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43666,Invoice,"ADAMS, JOSH",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",1,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43667,Invoice,"HESS, ANN",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",15,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43667,Invoice,"HESS, ANN",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43668,Invoice,"JOHNSTON, CALVIN",,USD,T2003-RI-MCW,My Choice Wisconsin: Non-Medical (RI) - Trip - One Way,1,,23,,,,no,,,,,My Choice Wisconsin,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43669,Invoice,"RINGWELL, JAMES",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",16,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43669,Invoice,"RINGWELL, JAMES",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43670,Invoice,"SANDER, AMY",,USD,T2003-RD-MCW,My Choice Wisconsin: Medical (RD) - Trip - One Way,2,,23,,,,no,,,,,My Choice Wisconsin,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43671,Invoice,"PFLEGER, MICHAEL",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",21,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43671,Invoice,"PFLEGER, MICHAEL",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43672,Invoice,"EWALD, CRYSTAL",,USD,S0215-RD-CC,Community Care: Medical (RD) - LOADED MILEAGE (S0215) - EACH MILE PER TRIP OVER 5 MILES,2,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43672,Invoice,"EWALD, CRYSTAL",,USD,T2003-RD-CC,"Community Care: Medical (RD) TRIP - ONE WAY, Ambulatory",1,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43673,Invoice,"LEGGETT, MAURAH",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",5,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43673,Invoice,"LEGGETT, MAURAH",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",1,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43673,Invoice,"LEGGETT, MAURAH",,USD,S0215-RI-C1-CC,"Community Care: Non-Medical (RI) - Per Unloaded Mile, Non-Loaded Mileage",16,,0.48,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43674,Invoice,"RICKABY, ANNA",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",17,,2,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43674,Invoice,"RICKABY, ANNA",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",3,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43675,Invoice,"DEJONG, CASE",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",12,,2,,,,no,,,,,Community Care,,1558124,
+Yes,6/18/2025,7/18/2025,43675,Invoice,"DEJONG, CASE",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",1,,20,,,,no,,,,,Community Care,,1558124,
+Yes,6/18/2025,7/18/2025,43676,Invoice,"HINTZ, RONALD",,USD,S0215-RD-U7-MCW,My Choice Wisconsin: Medical (RD) - Loaded Mileage per Passenger,22,,1.60,,,,no,,,,,My Choice Wisconsin,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43676,Invoice,"HINTZ, RONALD",,USD,T2003-RD-MCW,My Choice Wisconsin: Medical (RD) - Trip - One Way,1,,23,,,,no,,,,,My Choice Wisconsin,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43676,Invoice,"HINTZ, RONALD",,USD,S0215-RD-U7TP-MCW,My Choice Wisconsin: Medical (RD) - Unloaded Mileage (U7TP) per Passenger,21,,1,,,,no,,,,,My Choice Wisconsin,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43677,Invoice,"DAVIS, AMANDA",,USD,T2003-RD-CC,"Community Care: Medical (RD) TRIP - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43678,Invoice,"FRIEDMAN, JAMES",,USD,T2003-RD-AHW-I,"Inclusa: Medical (RD) - Trip - One Way, Wheelchair (W) After Hours (AH) (4:30pm - 7:30am) and Holidays",2,,48.30,,,,no,,,,,Inclusa,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43678,Invoice,"FRIEDMAN, JAMES",,USD,S0215-RD-I,Inclusa: Medical (RD) - LOADED Mileage,2,,1.37,,,,no,,,,,Inclusa,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43678,Invoice,"FRIEDMAN, JAMES",,USD,S0215-RD-TP-I,Inclusa: Medical (RD) - Per Unloaded Mile (TP),16,,0.80,,,,no,,,,,Inclusa,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43679,Invoice,"KLINGEISEN, MARY",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,,1566131,
+Yes,6/18/2025,7/18/2025,43679,Invoice,"KLINGEISEN, MARY",,USD,S0215-RI-CC,"Community Care: Non-Medical (RI) - Per Loaded Mile after 5 Miles, Loaded Mileage",1,,2,,,,no,,,,,Community Care,,1566131,
+Yes,6/18/2025,7/18/2025,43680,Invoice,"FERGUSON, PATRICK",,USD,S0215-RD-CC,Community Care: Medical (RD) - LOADED MILEAGE (S0215) - EACH MILE PER TRIP OVER 5 MILES,30,,2,,,,no,,,,,Community Care,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43680,Invoice,"FERGUSON, PATRICK",,USD,T2003-RD-CC,"Community Care: Medical (RD) TRIP - ONE WAY, Ambulatory",2,,20,,,,no,,,,,Community Care,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43680,Invoice,"FERGUSON, PATRICK",,USD,S0215-RD-C1-CC,"Community Care: Medical (RD) - Per Unloaded Mile After 5 Miles, (C1) Non-Loaded Mileage",59,,0.48,,,,no,,,,,Community Care,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43680,Invoice,"FERGUSON, PATRICK",,USD,T2007-RD-CC,Community Care: Medical (RD) - Per 30 Min of Wait Time,2,,10.50,,,,no,,,,,Community Care,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43681,Invoice,"WONCH, WILLIAM",,USD,T2003-RD-A-I,"Inclusa: Medical (RD) - Trip - One Way, Ambulatory (A)",1,,19.95,,,,no,,,,,Inclusa,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43681,Invoice,"WONCH, WILLIAM",,USD,S0215-RD-I,Inclusa: Medical (RD) - LOADED Mileage,4,,1.37,,,,no,,,,,Inclusa,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43681,Invoice,"WONCH, WILLIAM",,USD,S0215-RD-TP-I,Inclusa: Medical (RD) - Per Unloaded Mile (TP),18,,0.80,,,,no,,,,,Inclusa,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43681,Invoice,"WONCH, WILLIAM",,USD,T2003-RD-AH-I,"Inclusa: Medical (RD) - Trip - One Way, Ambulance (A) After Hours (AH) (4:30pm - 7:30am) and Holidays",1,,46.20,,,,yes,,,,,Inclusa,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43682,Invoice,"INGRAM, KATRYANA",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",1,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43683,Invoice,"MACLAUGHLIN, SHELLEY",,USD,T2003-RD-CC,"Community Care: Medical (RD) TRIP - ONE WAY, Ambulatory",1,,20,,,,no,,,,,Community Care,Authorization Needed,,
+Yes,6/18/2025,7/18/2025,43684,Invoice,"HEIMERL, COREY",,USD,S0215-RI-U7-MCW,My Choice Wisconsin: Non-Medical (RI) - Loaded Mileage per Passenger,4,,1.60,,,,no,,,,,My Choice Wisconsin,Authorization Needed,,Weekly
+Yes,6/18/2025,7/18/2025,43684,Invoice,"HEIMERL, COREY",,USD,T2003-RI-MCW,My Choice Wisconsin: Non-Medical (RI) - Trip - One Way,1,,23,,,,no,,,,,My Choice Wisconsin,Authorization Needed,,Weekly
+Yes,6/18/2025,7/18/2025,43685,Invoice,"BEHR, LORA",,USD,T2003-RI-CC,"Community Care: Non-Medical TRIP (RI) - ONE WAY, Ambulatory",1,,20,,,,no,,,,,Community Care,,1522556,Weekly
+Yes,6/18/2025,7/18/2025,43686,Invoice,"BUTLER, SHERRY",,USD,T2003-RD-AHW-I,"Inclusa: Medical (RD) - Trip - One Way, Wheelchair (W) After Hours (AH) (4:30pm - 7:30am) and Holidays",2,,48.30,,,,no,,,,,Inclusa,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43686,Invoice,"BUTLER, SHERRY",,USD,S0215-RD-I,Inclusa: Medical (RD) - LOADED Mileage,6,,1.37,,,,no,,,,,Inclusa,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43686,Invoice,"BUTLER, SHERRY",,USD,S0215-RD-TP-I,Inclusa: Medical (RD) - Per Unloaded Mile (TP),20,,0.80,,,,no,,,,,Inclusa,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43687,Invoice,"SCHULZ, SONYA",,USD,T2003-RI-A-I,Inclusa: Non-Medical (RI) - Trip - One Way - Ambulatory,2,,19.95,,,,no,,,,,Inclusa,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43687,Invoice,"SCHULZ, SONYA",,USD,S0215-RI-I,Inclusa: Non-Medical (RI) - LOADED Mileage,52,,1.37,,,,no,,,,,Inclusa,Authorization Needed,,Daily
+Yes,6/18/2025,7/18/2025,43687,Invoice,"SCHULZ, SONYA",,USD,S0215-RI-TP-I,Inclusa: Non-Medical (RI) - Per Unloaded Mile (TP),44,,0.80,,,,no,,,,,Inclusa,Authorization Needed,,Daily

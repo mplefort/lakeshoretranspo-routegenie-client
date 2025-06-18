@@ -1,1 +1,0 @@
-*InvoiceNo,*Customer,*InvoiceDate,*DueDate,Terms,Location,Memo,Item(Product/Service),ItemDescription,ItemQuantity,ItemRate,*ItemAmount,Taxable,TaxRate,Shipping address,Ship via,Shipping date,Tracking no,Shipping Charge,Service Date

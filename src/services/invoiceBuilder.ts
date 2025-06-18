@@ -29,12 +29,14 @@ interface ExtraFields {
   caseWorker: string;
   caseWorkerEmail: string;
   clientAuth: string;
+  billingFrequency?: string;
 }
 interface AggregationType {
   [key: string]: { items: Record<string, AggregatedItem>, extra: ExtraFields };
 }
 
-interface OutputRecordType {
+// Output record type for invoice and QB sync
+export type OutputRecordType = {
   InvoiceNumber: number;
   CustomerName: string;
   ServiceItem: string;
@@ -43,7 +45,8 @@ interface OutputRecordType {
   CaseWorker: string;
   CaseWorkerEmail: string;
   ClientAuthorization: string;
-}
+  BillingFrequency?: string;
+};
 
 /**
  * Main entry point for building invoices.
@@ -115,6 +118,7 @@ function aggregateRows(rows: RouteRow[]): AggregationType {
           caseWorker: row['Custom Field: CaseWorker'] || '',
           caseWorkerEmail: row['Custom Field: CaseWorker Email'] || '',
           clientAuth,
+          billingFrequency: row['Custom Field: Billing Frequency'] || ''
         }
       };
     }
@@ -142,7 +146,7 @@ function aggregateDetailFields(row: RouteRow, agg: AggregationType, key: string,
       const quantity = Number(qtyVals[i] || 0);
       const costVal = Number(costVals[i] || 0);
       if (!code || quantity === 0) continue;
-      const itemKey = `${code}-${modifier}-${payer}`;
+      const itemKey = modifier ? `${code}-${modifier}-${payer}`:`${code}-${payer}`;
       if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0 };
       agg[key].items[itemKey].qty += quantity;
       agg[key].items[itemKey].cost += costVal;
@@ -153,7 +157,7 @@ function aggregateDetailFields(row: RouteRow, agg: AggregationType, key: string,
 /**
  * Aggregates custom service codes (dead miles) with payer/quantity logic.
  * - S0215: Always aggregate for payer 'I'
- * - S0215: Only aggregate for 'CC' or 'MCW' if quantity >= 15
+ * - S0215: Only aggregate for 'CC', 'MCW', or 'PP' if quantity >= 15
  * - All others: aggregate as normal
  */
 function aggregateCustomServiceCodes(row: RouteRow, agg: AggregationType, key: string, payer: string): void {
@@ -171,7 +175,7 @@ function aggregateCustomServiceCodes(row: RouteRow, agg: AggregationType, key: s
           if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0 };
           agg[key].items[itemKey].qty += quantity;
           agg[key].items[itemKey].cost += costVal;
-        } else if ((payer === 'CC' || payer === 'MCW') && quantity >= 15) {
+        } else if ((payer === 'CC' || payer === 'MCW' || payer === 'PP') && quantity >= 15) {
           if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0 };
           agg[key].items[itemKey].qty += quantity;
           agg[key].items[itemKey].cost += costVal;
@@ -214,6 +218,8 @@ function flattenAggregatedResults(agg: AggregationType): OutputRecordType[] {
     const { caseWorker, caseWorkerEmail, clientAuth } = agg[passenger].extra;
     for (const item of Object.keys(agg[passenger].items)) {
       const { qty, cost } = agg[passenger].items[item];
+      // Pass through Billing Frequency if present
+      const billingFrequency = agg[passenger].extra.billingFrequency || '';
       records.push({
         InvoiceNumber: invoiceNum,
         CustomerName: custName,
@@ -222,7 +228,8 @@ function flattenAggregatedResults(agg: AggregationType): OutputRecordType[] {
         TotalCost: cost,
         CaseWorker: caseWorker,
         CaseWorkerEmail: caseWorkerEmail,
-        ClientAuthorization: clientAuth
+        ClientAuthorization: clientAuth,
+        BillingFrequency: billingFrequency
       });
     }
     invoiceNum++;
@@ -288,3 +295,5 @@ function parseOrderItems(
   }
   return results;
 }
+
+export { flattenAggregatedResults, parseCsvRows, aggregateRows };

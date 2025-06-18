@@ -10,7 +10,7 @@
             "name": "Debug pullRouteGenie",
             "program": "${workspaceFolder}/src/commands/pullRouteGenie.ts",
             "args": [
-            "05/25/2025", "06/14/2025" 
+            "06/17/2025", "06/17/2025" 
             ],
             "runtimeArgs": [
             "-r",
@@ -24,7 +24,8 @@
             "name": "Debug buildInvoices",
             "program": "${workspaceFolder}/src/commands/buildInvoices.ts",
             "args": [
-                "${workspaceFolder}/reports/billing/2025_05_25-2025_06_14_billing.csv"
+                "${workspaceFolder}/reports/billing/2025_06_17-2025_06_17_billing.csv",
+                "43639"
             ],
             "runtimeArgs": [
                 "-r",
