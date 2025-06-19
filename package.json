@@ -5,7 +5,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "pull:billing": "ts-node src/commands/pullRouteGenie.ts"
+    "dev": "ts-node src/commands/billingWorkflowInteractive.ts",
+    "pull:billing": "ts-node src/commands/pullRouteGenie.ts",
+    "billing-workflow": "ts-node src/commands/billingWorkflowSimple.ts",
+    "billing-workflow:interactive": "ts-node src/commands/billingWorkflowInteractive.ts",
+    "install:nexe": "npm install nexe@4.0.0-rc.2 --save-dev",
+    "build:prep": "tsc && mkdir -p build",
+    "build:windows": "npm run build:prep && nexe dist/commands/billingWorkflowSimple.js --target windows-x64-18.15.0 --output build/billingWorkflow-windows.exe",
+    "build:linux": "npm run build:prep && nexe dist/commands/billingWorkflowSimple.js --target linux-x64-18.15.0 --output build/billingWorkflow-linux",
+    "build:macos": "npm run build:prep && nexe dist/commands/billingWorkflowSimple.js --target macos-x64-18.15.0 --output build/billingWorkflow-macos",
+    "build:executables": "npm run install:nexe && npm run build:windows && npm run build:linux && npm run build:macos",
+    "start": "./run-billing-workflow.sh"
   },
   "keywords": [],
   "author": "",

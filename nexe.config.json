@@ -1,0 +1,23 @@
+{
+  "targets": [
+    {
+      "name": "windows-x64",
+      "version": "18.15.0"
+    },
+    {
+      "name": "linux-x64", 
+      "version": "18.15.0"
+    },
+    {
+      "name": "macos-x64",
+      "version": "18.15.0"
+    }
+  ],
+  "build": true,
+  "input": "./dist/commands/billingWorkflowSimple.js",
+  "output": "./build/billingWorkflow",
+  "resources": [
+    "./mappings/**/*",
+    ".env.example"
+  ]
+}

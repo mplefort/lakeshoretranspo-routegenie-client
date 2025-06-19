@@ -2,6 +2,33 @@
 
 A Node.js client for RouteGenie API using Axios and OAuth2 client_credentials.
 
+## 🚀 New: Billing Workflow CLI
+
+**Complete billing automation in a single command!**
+
+The new Billing Workflow CLI automates the entire process:
+- Pull billing reports from RouteGenie
+- Build invoices from billing data  
+- Generate QuickBooks sync files
+- Comprehensive logging and error handling
+
+### Quick Start
+
+```bash
+# Interactive mode (recommended for first-time users)
+./run-billing-workflow.sh
+
+# Specify date range
+./run-billing-workflow.sh -s 06/01/2025 -e 06/19/2025
+
+# With custom invoice number and output directory
+./run-billing-workflow.sh -s 06/01/2025 -e 06/19/2025 -n 2000 -o ./custom-output
+```
+
+**📖 [Complete Billing Workflow Documentation](./BILLING_WORKFLOW.md)**
+
+## Project Structure
+
 lakeshoretranspo-routegenie-client/
 │
 ├── src/
