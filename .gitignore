@@ -7,3 +7,6 @@
 # Optional lockfiles
 package-lock.json
 yarn.lock
+
+# Build output
+/dist/*
