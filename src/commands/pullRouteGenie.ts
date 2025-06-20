@@ -2,6 +2,7 @@
 import { generateBillingReport } from '../adapters/routeGenie';
 import path from 'path';
 import { config } from 'dotenv';
+import { resolveFromExecutable } from '../utils/paths';
 config();
 
 // example usage: node pullRouteGenie.js 01/01/2025 01/31/2025
@@ -11,7 +12,7 @@ if (!periodFrom || !periodTo) {
   process.exit(1);
 }
 
-const outDir = path.resolve(process.cwd(), 'reports', 'billing');
+const outDir = resolveFromExecutable('reports', 'billing');
 
 generateBillingReport(periodFrom, periodTo, outDir)
   .catch(err => {

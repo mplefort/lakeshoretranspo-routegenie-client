@@ -11,10 +11,15 @@
     "billing-workflow:interactive": "ts-node src/commands/billingWorkflowInteractive.ts",
     "install:nexe": "npm install nexe@4.0.0-rc.2 --save-dev",
     "build:prep": "tsc && mkdir -p build",
-    "build:windows": "npm run build:prep && nexe dist/commands/billingWorkflowSimple.js --target windows-x64-18.15.0 --output build/billingWorkflow-windows.exe",
-    "build:linux": "npm run build:prep && nexe dist/commands/billingWorkflowSimple.js --target linux-x64-18.15.0 --output build/billingWorkflow-linux",
-    "build:macos": "npm run build:prep && nexe dist/commands/billingWorkflowSimple.js --target macos-x64-18.15.0 --output build/billingWorkflow-macos",
+    "build:windows": "npm run build:prep && nexe dist/commands/billingWorkflowSimple.js --target windows-x64-18.20.8 --output build/billingWorkflow-windows.exe",
+    "build:linux": "npm run build:prep && nexe dist/commands/billingWorkflowSimple.js --target linux-x64-18.20.8 --output build/billingWorkflow-linux",
+    "build:macos": "npm run build:prep && nexe dist/commands/billingWorkflowSimple.js --target macos-x64-18.20.8 --output build/billingWorkflow-macos",
+    "build:interactive:windows": "npm run build:prep && nexe dist/commands/billingWorkflowInteractive.js --target windows-x64-18.20.8 --output build/billingWorkflow-interactive-windows.exe",
+    "build:interactive:linux": "npm run build:prep && nexe ./dist/commands/billingWorkflowInteractive.js -r \"mappings/*.csv\" --name billingWorkflow-interactive-linux --output build/billingWorkflow-interactive-linux --target linux-x64-18.20.8 --build",
+    "pkg:interactive:linux": "npm run build:prep && pkg dist/commands/billingWorkflowInteractive.js --targets linux-x64 --output build/billingWorkflow-interactive-linux-pkg",
+    "build:interactive:macos": "npm run build:prep && nexe dist/commands/billingWorkflowInteractive.js --target macos-x64-18.20.8 --output build/billingWorkflow-interactive-macos",
     "build:executables": "npm run install:nexe && npm run build:windows && npm run build:linux && npm run build:macos",
+    "build:all": "npm run install:nexe && npm run build:windows && npm run build:linux && npm run build:macos && npm run build:interactive:windows && npm run build:interactive:linux && npm run build:interactive:macos",
     "start": "./run-billing-workflow.sh"
   },
   "keywords": [],
@@ -31,7 +36,18 @@
   "devDependencies": {
     "@types/node": "^24.0.1",
     "@types/qs": "^6.14.0",
+    "nexe": "^4.0.0-rc.2",
+    "pkg": "^5.8.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
+  },
+  "pkg": {
+    "assets": [
+      "mappings/**/*",
+      "node_modules/axios/**/*"
+    ],
+    "targets": [
+      "node18-linux-x64"
+    ]
   }
 }

@@ -9,4 +9,11 @@ package-lock.json
 yarn.lock
 
 # Build output
-/dist/*
+/dist/
+/build/
+*.tgz
+*.tar.gz
+
+# program outputs
+*.log
+/reports/

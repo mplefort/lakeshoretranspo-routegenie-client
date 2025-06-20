@@ -75,7 +75,9 @@ lakeshoretranspo-routegenie-client/
 
 1. `npm install`  
 2. Create a `.env` with HOST, CLIENT_ID, CLIENT_SECRET  
-3. `node auth.js` to fetch your token  
+3. `npm run install:nexe`
+4. `npm run build`
+5. `npm run build:interactive:macos`
 
 2. Recommended Packages & Tools
 HTTP & APIs:

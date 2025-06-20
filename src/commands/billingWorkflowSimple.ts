@@ -5,6 +5,7 @@ import { generateBillingReport } from '../adapters/routeGenie';
 import { buildInvoices, flattenAggregatedResults, parseCsvRows, aggregateRows } from '../services/invoiceBuilder';
 import { loadQBServiceCodes, buildQBSyncFile } from '../services/qbSync';
 import { Logger } from '../utils/logger';
+import { resolveFromExecutable } from '../utils/paths';
 import { parse as csvParse } from 'fast-csv';
 import { config } from 'dotenv';
 
@@ -26,7 +27,7 @@ class BillingWorkflow {
 
   constructor(options: WorkflowOptions) {
     this.options = options;
-    const logFile = options.logFile || path.join(process.cwd(), 'logs', `billing-workflow-${this.getDateString()}.log`);
+    const logFile = options.logFile || resolveFromExecutable('logs', `billing-workflow-${this.getDateString()}.log`);
     this.logger = new Logger(logFile);
   }
 
@@ -155,7 +156,7 @@ NOTES:
       const startDate = options.startDate || defaultDate;
       const endDate = options.endDate || defaultDate;
       const invoiceNumber = parseInt(options.invoiceNumber || '1000', 10);
-      const outputDir = path.resolve(options.outputDir || path.join(process.cwd(), 'reports', 'billing'));
+      const outputDir = path.resolve(options.outputDir || resolveFromExecutable('reports', 'billing'));
 
       // Validate dates
       if (!this.validateDate(startDate)) {
@@ -201,7 +202,7 @@ NOTES:
       // Step 3: Generate QuickBooks sync file
       this.logger.progress('Generating QuickBooks sync file...');
       
-      const qbCodesPath = path.resolve(__dirname, '../../mappings/QB_Service_codes.csv');
+      const qbCodesPath = resolveFromExecutable('mappings', 'QB_Service_codes.csv');
       if (!fs.existsSync(qbCodesPath)) {
         throw new Error(`QuickBooks service codes mapping file not found: ${qbCodesPath}`);
       }

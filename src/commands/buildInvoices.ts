@@ -4,6 +4,7 @@ import { buildInvoices, flattenAggregatedResults, parseCsvRows, aggregateRows } 
 import { loadQBServiceCodes, buildQBSyncFile } from '../services/qbSync';
 import fs from 'fs';
 import { parse as csvParse } from 'fast-csv';
+import { resolveFromExecutable } from '../utils/paths';
 import 'dotenv/config';
 
 // Helper to build a payer short id to full name map from the input CSV
@@ -33,7 +34,7 @@ async function buildPayerMap(inputCsv: string): Promise<Record<string, string>> 
   await buildInvoices(inputCsv, outputCsv);
 
   // QB Sync generation
-  const qbCodesPath = path.resolve(__dirname, '../../mappings/QB_Service_codes.csv');
+  const qbCodesPath = resolveFromExecutable('mappings', 'QB_Service_codes.csv');
   const qbCodes = await loadQBServiceCodes(qbCodesPath);
   const payerMap = await buildPayerMap(inputCsv);
   // Use exported helpers to get invoice records
