@@ -169,8 +169,14 @@ function aggregateDetailFields(row: RouteRow, agg: AggregationType, key: string,
     for (let i = 0; i < svcCodes.length; i++) {
       const code = svcCodes[i];
       const modifier = modCodes[i] || '';
-      const quantity = Number(qtyVals[i] || 0);
+      let quantity = Number(qtyVals[i] || 0);
       const costVal = Number(costVals[i] || 0);
+      
+      // Special logic for Order Mileage Quantity: MCW/CC payers get 0 miles if <5 miles
+      if (qty === 'Order Mileage Quantity' && (payer === 'MCW' || payer === 'CC') && quantity < 5) {
+        quantity = 0;
+      }
+      
       if (!code || quantity === 0) continue;
       const itemKey = modifier ? `${code}-${modifier}-${payer}`:`${code}-${payer}`;
       if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0 };
