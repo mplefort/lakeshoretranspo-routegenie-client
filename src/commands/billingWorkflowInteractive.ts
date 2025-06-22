@@ -294,7 +294,7 @@ NOTES:
       // Step 2: Build invoices
       Logger.progress('Building invoices from billing data...');
       const invoicesCsvPath = path.join(outputDir, 'invoices.csv');
-      await buildInvoices(billingCsvPath, invoicesCsvPath);
+      await buildInvoices(billingCsvPath, invoicesCsvPath, invoiceNumber);
       Logger.success('Invoices generated successfully');
 
       // Step 3: Generate QuickBooks sync file
@@ -310,7 +310,7 @@ NOTES:
 
       // Get invoice records using the exported helpers
       const agg = await parseCsvRows(billingCsvPath).then(aggregateRows);
-      const records = flattenAggregatedResults(agg);
+      const records = flattenAggregatedResults(agg, invoiceNumber);
 
       const today = new Date();
       await buildQBSyncFile(records, qbCodes, invoiceNumber, today, outputDir, payerMap);

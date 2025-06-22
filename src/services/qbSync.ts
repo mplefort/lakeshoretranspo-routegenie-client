@@ -50,8 +50,6 @@ export async function buildQBSyncFile(records: OutputRecordType[], qbCodes: QBSe
 
   const mainRows: any[] = [];
   const missingRows: any[] = [];
-  let invoiceNum = firstInvoiceNum;
-  let lastCustomer = '';
 
   for (const rec of records) {
     // Format customer as Lastname, Firstname
@@ -64,16 +62,15 @@ export async function buildQBSyncFile(records: OutputRecordType[], qbCodes: QBSe
     const payerFullName = payerMap && payerMap[payerId] ? payerMap[payerId] : payerId;
     const authorizations1 = rec.ClientAuthorization || '';
     const invoiceBillingStatus = authorizations1 ? '' : 'Authorization Needed';
-    // Only increment invoiceNum when customer changes, but assign before increment
-    if (lastCustomer !== customer) {
-      invoiceNum++;
-      lastCustomer = customer;
-    }
+    
+    // Use the invoice number from the record (which is already correctly assigned)
+    const invoiceNumber = rec.InvoiceNumber;
+    
     const row = {
       'Post?': 'Yes',
       'Invoice/Bill Date': dateFmt(today),
       'Due Date': dateFmt(dueDate),
-      'Invoice / Bill Number': invoiceNum,
+      'Invoice / Bill Number': invoiceNumber,
       'Transaction Type': 'Invoice',
       'Customer': customer,
       'Vendor': '',

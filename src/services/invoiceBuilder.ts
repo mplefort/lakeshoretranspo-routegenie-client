@@ -25,7 +25,7 @@ interface AggregatedItem {
   cost: number;
 }
 
-type Key = string; // "fn|ln"
+type Key = string; // "fn|ln|clientAuth"
 interface ExtraFields {
   caseWorker: string;
   caseWorkerEmail: string;
@@ -52,10 +52,10 @@ export type OutputRecordType = {
 /**
  * Main entry point for building invoices.
  */
-export async function buildInvoices(inputCsv: string, outputCsv: string): Promise<void> {
+export async function buildInvoices(inputCsv: string, outputCsv: string, startingInvoiceNumber: number = 1000): Promise<void> {
   const rows = await parseCsvRows(inputCsv);
   const agg = aggregateRows(rows);
-  const records = flattenAggregatedResults(agg);
+  const records = flattenAggregatedResults(agg, startingInvoiceNumber);
   await writeCsvRecords(outputCsv, records);
 }
 
@@ -90,9 +90,9 @@ async function parseCsvRows(inputCsv: string): Promise<RouteRow[]> {
         Object.keys(row).forEach(key => {
           row[key] = typeof row[key] === 'string' ? row[key].trim() : row[key];
         });
-        if (PAYER_FILTER.includes(row['Payer Name'])) {
+        // if (PAYER_FILTER.includes(row['Payer Name'])) {
           rows.push(row);
-        }
+        // }
       })
       .on('end', resolve);
   });
@@ -101,6 +101,8 @@ async function parseCsvRows(inputCsv: string): Promise<RouteRow[]> {
 
 /**
  * Aggregates all rows into a nested object by passenger and service item.
+ * Groups by passenger name AND client authorization to create separate invoices
+ * for different authorization numbers under the same passenger.
  */
 function aggregateRows(rows: RouteRow[]): AggregationType {
   const agg: AggregationType = {};
@@ -108,11 +110,15 @@ function aggregateRows(rows: RouteRow[]): AggregationType {
     const fn = row["Passenger's First Name"] || '';
     const ln = row["Passenger's Last Name"] || '';
     const payer = row['Payer Name'] || '';
-    const key = `${fn}|${ln}`;
+    
+    let clientAuth = row['Orders Client Authorization'] || '';
+    // Blank out if numeric and > 1E15. Remove the auto created RG auth numbers.
+    if (!isNaN(Number(clientAuth)) && Number(clientAuth) > 1e15) clientAuth = '';
+    
+    // Create key that includes both passenger name and client authorization
+    const key = `${fn}|${ln}|${clientAuth}`;
+    
     if (!agg[key]) {
-      let clientAuth = row['Orders Client Authorization'] || '';
-      // Blank out if numeric and > 1E15. Remove the auto created RG auth numbers.
-      if (!isNaN(Number(clientAuth)) && Number(clientAuth) > 1e15) clientAuth = '';
       agg[key] = {
         items: {},
         extra: {
@@ -209,18 +215,19 @@ function aggregateOrderItems(row: RouteRow, agg: AggregationType, key: string, p
 
 /**
  * Flattens the aggregation object into an array of records for CSV output.
+ * Each unique passenger-authorization combination gets its own invoice number.
  */
-function flattenAggregatedResults(agg: AggregationType): OutputRecordType[] {
+function flattenAggregatedResults(agg: AggregationType, startingInvoiceNumber: number = 1000): OutputRecordType[] {
   const records: OutputRecordType[] = [];
-  let invoiceNum = 1000;
-  for (const passenger of Object.keys(agg)) {
-    const [fn, ln] = passenger.split('|');
+  let invoiceNum = startingInvoiceNumber;
+  for (const passengerAuth of Object.keys(agg)) {
+    const [fn, ln, clientAuth] = passengerAuth.split('|');
     const custName = `${fn} ${ln}`.trim();
-    const { caseWorker, caseWorkerEmail, clientAuth } = agg[passenger].extra;
-    for (const item of Object.keys(agg[passenger].items)) {
-      const { qty, cost } = agg[passenger].items[item];
+    const { caseWorker, caseWorkerEmail } = agg[passengerAuth].extra;
+    for (const item of Object.keys(agg[passengerAuth].items)) {
+      const { qty, cost } = agg[passengerAuth].items[item];
       // Pass through Billing Frequency if present
-      const billingFrequency = agg[passenger].extra.billingFrequency || '';
+      const billingFrequency = agg[passengerAuth].extra.billingFrequency || '';
       records.push({
         InvoiceNumber: invoiceNum,
         CustomerName: custName,
