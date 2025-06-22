@@ -6,6 +6,16 @@ import { Logger } from '../utils/logger';
 
 // --- CONSTANTS & TYPES ---
 
+/**
+ * Normalizes payer names to handle PP_# format by converting to PP
+ */
+function normalizePayer(payer: string): string {
+  if (payer && payer.match(/^PP_\d+$/)) {
+    return 'PP';
+  }
+  return payer;
+}
+
 const CUSTOM_SERVICE_CODE_REGEX = /Service code:\s*([\w-]+),\s*Modifier:\s*([\w-]+),\s*Quantity:([\d.]+),\s*Cost:\s*([\d.]+)/g;
 const PAYER_FILTER = ['CC', 'I', 'MCW', 'PP'];
 const DETAIL_FIELDS = [
@@ -31,6 +41,7 @@ interface ExtraFields {
   caseWorkerEmail: string;
   clientAuth: string;
   billingFrequency?: string;
+  originalPayers: Set<string>; // Track original payer names for this passenger
 }
 interface AggregationType {
   [key: string]: { items: Record<string, AggregatedItem>, extra: ExtraFields };
@@ -47,6 +58,7 @@ export type OutputRecordType = {
   CaseWorkerEmail: string;
   ClientAuthorization: string;
   BillingFrequency?: string;
+  OriginalPayer?: string; // Store original payer name for QB sync lookup
 };
 
 /**
@@ -90,7 +102,8 @@ async function parseCsvRows(inputCsv: string): Promise<RouteRow[]> {
         Object.keys(row).forEach(key => {
           row[key] = typeof row[key] === 'string' ? row[key].trim() : row[key];
         });
-        // if (PAYER_FILTER.includes(row['Payer Name'])) {
+        // Note: PAYER_FILTER is currently disabled. If re-enabled, should use normalizePayer()
+        // if (PAYER_FILTER.includes(normalizePayer(row['Payer Name']))) {
           rows.push(row);
         // }
       })
@@ -109,7 +122,8 @@ function aggregateRows(rows: RouteRow[]): AggregationType {
   for (const row of rows) {
     const fn = row["Passenger's First Name"] || '';
     const ln = row["Passenger's Last Name"] || '';
-    const payer = row['Payer Name'] || '';
+    const originalPayer = row['Payer Name'] || '';
+    const payer = normalizePayer(originalPayer);
     
     let clientAuth = row['Orders Client Authorization'] || '';
     // Blank out if numeric and > 1E15. Remove the auto created RG auth numbers.
@@ -125,10 +139,15 @@ function aggregateRows(rows: RouteRow[]): AggregationType {
           caseWorker: row['Custom Field: CaseWorker'] || '',
           caseWorkerEmail: row['Custom Field: CaseWorker Email'] || '',
           clientAuth,
-          billingFrequency: row['Custom Field: Billing Frequency'] || ''
+          billingFrequency: row['Custom Field: Billing Frequency'] || '',
+          originalPayers: new Set<string>()
         }
       };
     }
+    
+    // Track original payer names for this passenger
+    agg[key].extra.originalPayers.add(originalPayer);
+    
     aggregateDetailFields(row, agg, key, payer);
     aggregateCustomServiceCodes(row, agg, key, payer);
     aggregateOrderItems(row, agg, key, payer);
@@ -223,11 +242,25 @@ function flattenAggregatedResults(agg: AggregationType, startingInvoiceNumber: n
   for (const passengerAuth of Object.keys(agg)) {
     const [fn, ln, clientAuth] = passengerAuth.split('|');
     const custName = `${fn} ${ln}`.trim();
-    const { caseWorker, caseWorkerEmail } = agg[passengerAuth].extra;
+    const { caseWorker, caseWorkerEmail, originalPayers } = agg[passengerAuth].extra;
+    
     for (const item of Object.keys(agg[passengerAuth].items)) {
       const { qty, cost } = agg[passengerAuth].items[item];
       // Pass through Billing Frequency if present
       const billingFrequency = agg[passengerAuth].extra.billingFrequency || '';
+      
+      // Extract the payer from the service item (last part after last dash)
+      const normalizedPayer = item.split('-').pop() || '';
+      
+      // Find the original payer that corresponds to this normalized payer
+      let originalPayer = normalizedPayer;
+      for (const op of originalPayers) {
+        if (normalizePayer(op) === normalizedPayer) {
+          originalPayer = op;
+          break;
+        }
+      }
+      
       records.push({
         InvoiceNumber: invoiceNum,
         CustomerName: custName,
@@ -237,7 +270,8 @@ function flattenAggregatedResults(agg: AggregationType, startingInvoiceNumber: n
         CaseWorker: caseWorker,
         CaseWorkerEmail: caseWorkerEmail,
         ClientAuthorization: clientAuth,
-        BillingFrequency: billingFrequency
+        BillingFrequency: billingFrequency,
+        OriginalPayer: originalPayer
       });
     }
     invoiceNum++;
