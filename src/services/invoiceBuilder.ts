@@ -2,6 +2,7 @@ import fs from 'fs';
 import { parse } from 'fast-csv';
 import { createObjectCsvWriter } from 'csv-writer';
 import path from 'path';
+import { Logger } from '../utils/logger';
 
 // --- CONSTANTS & TYPES ---
 
@@ -255,7 +256,7 @@ async function writeCsvRecords(outputCsv: string, records: OutputRecordType[]): 
     ]
   });
   await writer.writeRecords(records);
-  console.log(`Invoices written to ${outputCsv}`);
+  Logger.success(`Invoices written to ${outputCsv}`);
 }
 
 /**

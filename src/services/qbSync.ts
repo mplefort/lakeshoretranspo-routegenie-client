@@ -3,6 +3,7 @@ import path from 'path';
 import { parse } from 'fast-csv';
 import { createObjectCsvWriter } from 'csv-writer';
 import type { OutputRecordType } from './invoiceBuilder';
+import { Logger } from '../utils/logger';
 
 interface QBServiceCode {
   [key: string]: {
@@ -118,5 +119,5 @@ export async function buildQBSyncFile(records: OutputRecordType[], qbCodes: QBSe
     header: QB_SYNC_HEADERS.map(h => ({ id: h, title: h }))
   });
   await csvWriter.writeRecords(allRows);
-  console.log(`QB Sync CSV written to ${outPath}`);
+  Logger.success(`QB Sync CSV written to ${outPath}`);
 }

@@ -3,9 +3,11 @@ import qs from 'qs';
 import fs from 'fs';
 import path from 'path';
 import { RG_HOST, RG_CLIENT_ID, RG_CLIENT_SECRET, RG_USER_ID } from '../config';
+import { Logger } from '../utils/logger';
 
 // Obtain OAuth2 access token from RouteGenie API using client credentials
 export async function getAccessToken(): Promise<string> {
+  Logger.info(`Requesting access token from ${RG_HOST}/oauth2/token/`);
   const creds = Buffer.from(`${RG_CLIENT_ID}:${RG_CLIENT_SECRET}`).toString('base64');
   const body = qs.stringify({ grant_type: 'client_credentials' });
   const res = await axios.post(
@@ -31,8 +33,8 @@ function formatDateForFile(dateStr: string): string {
 async function downloadCsvWhenReady(csvUrl: string, filePath: string): Promise<void> {
   const wait = (ms: number) => new Promise(res => setTimeout(res, ms));
   let attempt = 1;
-  console.log(`⬇️ Attempt to download CSV to ${filePath}`);
   while (true) {
+    Logger.progress(`Attempt to download RG Report number ${attempt}`);
     const dl = await axios.get(csvUrl, { responseType: 'stream' });
     // Save the downloaded file to disk
     await new Promise((resolve, reject) => {
@@ -45,10 +47,9 @@ async function downloadCsvWhenReady(csvUrl: string, filePath: string): Promise<v
     // Check if the file is actually the "report generating" HTML message
     const content = fs.readFileSync(filePath, 'utf8');
     if (!content.includes('<title>Report generating</title>')) {
-      console.log('✅ Report ready.');
       break; // Exit loop if the file is a real CSV
     }
-    console.log('⏳ Still generating; retrying in 10s...');
+    Logger.info('Still generating; retrying in 10s...');
     await wait(10000); // Wait 10 seconds before retrying
     attempt++;
   }
@@ -89,5 +90,5 @@ export async function generateBillingReport(
 
   // Download the CSV, retrying if necessary until the report is ready
   await downloadCsvWhenReady(csvUrl, filePath);
-  console.log(`✅ Saved to ${filePath}`);
+  Logger.success(`RG Bill report saved to ${filePath}`);
 }

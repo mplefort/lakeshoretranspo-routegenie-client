@@ -1,11 +1,25 @@
 import fs from 'fs';
 import path from 'path';
 
-export class Logger {
+class LoggerClass {
   private logFile: string;
   private logStream?: fs.WriteStream;
+  private debugMode: boolean;
 
-  constructor(logFile?: string) {
+  constructor() {
+    this.logFile = '';
+    this.debugMode = false;
+  }
+
+  initialize(logFile?: string, debugMode: boolean = false): void {
+    this.debugMode = debugMode;
+    
+    // Close existing stream if reinitializing
+    if (this.logStream) {
+      this.logStream.end();
+      this.logStream = undefined;
+    }
+
     if (logFile) {
       this.logFile = logFile;
       // Ensure log directory exists
@@ -28,8 +42,10 @@ export class Logger {
     }
   }
 
-  info(message: string): void {
-    console.log('ℹ️', message);
+  info(message: string, forceConsole: boolean = false): void {
+    if (this.debugMode || forceConsole) {
+      console.log('ℹ️', message);
+    }
     this.writeToLog('INFO', message);
   }
 
@@ -39,7 +55,9 @@ export class Logger {
   }
 
   warn(message: string): void {
-    console.log('⚠️', message);
+    if (this.debugMode) {
+      console.log('⚠️', message);
+    }
     this.writeToLog('WARN', message);
   }
 
@@ -53,9 +71,16 @@ export class Logger {
     this.writeToLog('PROGRESS', message);
   }
 
+  setDebugMode(enabled: boolean): void {
+    this.debugMode = enabled;
+  }
+
   close(): void {
     if (this.logStream) {
       this.logStream.end();
     }
   }
 }
+
+// Create and export singleton instance
+export const Logger = new LoggerClass();

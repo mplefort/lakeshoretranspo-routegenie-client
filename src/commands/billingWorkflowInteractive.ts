@@ -21,17 +21,23 @@ interface WorkflowOptions {
   logFile?: string;
   help?: boolean;
   interactive?: boolean;
+  debug?: boolean;
 }
 
 class BillingWorkflowInteractive {
-  private logger: Logger;
   private options: WorkflowOptions;
   private rl: readline.Interface;
 
   constructor(options: WorkflowOptions) {
     this.options = options;
     const logFile = options.logFile || resolveFromExecutable('logs', `billing-workflow-${this.getDateString()}.log`);
-    this.logger = new Logger(logFile);
+    const debugMode = options.debug || false;
+    if(debugMode) {
+      console.log('Debug mode enabled. Verbose logging to console.');
+    }
+    
+    // Initialize the global logger
+    Logger.initialize(logFile, debugMode);
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout
@@ -98,6 +104,10 @@ class BillingWorkflowInteractive {
         case '--interactive':
           options.interactive = true;
           break;
+        case '-d':
+        case '--debug':
+          options.debug = true;
+          break;
         case '-h':
         case '--help':
           options.help = true;
@@ -122,6 +132,7 @@ OPTIONS:
   -o, --output-dir <path>      Output directory (default: ./reports/billing)
   -l, --log-file <path>        Log file path
   -i, --interactive            Interactive mode - prompt for missing inputs
+  -d, --debug                  Enable debug mode (verbose console logging)
   -h, --help                   Show this help message
 
 EXAMPLES:
@@ -129,6 +140,7 @@ EXAMPLES:
   billing-workflow -s 06/01/2025 -e 06/19/2025      # Specify date range
   billing-workflow -s 06/01/2025 -e 06/19/2025 -n 2000 -o ./output
   billing-workflow --interactive                     # Force interactive mode
+  billing-workflow --debug                           # Enable verbose console logging
   
 NOTES:
   • Dates must be in MM/DD/YYYY format
@@ -154,7 +166,7 @@ NOTES:
       if (!startDate) startDate = defaultDate;
 
       while (!this.validateDate(startDate)) {
-        this.logger.error('Invalid date format. Please use MM/DD/YYYY.');
+        Logger.error('Invalid date format. Please use MM/DD/YYYY.');
         startDate = await this.question('Enter start date (MM/DD/YYYY): ');
       }
     }
@@ -164,7 +176,7 @@ NOTES:
       if (!endDate) endDate = defaultDate;
 
       while (!this.validateDate(endDate)) {
-        this.logger.error('Invalid date format. Please use MM/DD/YYYY.');
+        Logger.error('Invalid date format. Please use MM/DD/YYYY.');
         endDate = await this.question('Enter end date (MM/DD/YYYY): ');
       }
     }
@@ -217,13 +229,15 @@ NOTES:
     }
 
     try {
-      this.logger.info('🚀 Starting Lakeshore Transportation Billing Workflow');
-      this.logger.info(`Log file: ${this.logger['logFile']}`);
+      Logger.info('starting Lakeshore Transportation Billing Workflow', true);
+      
+      const logFile = this.options.logFile || resolveFromExecutable('logs', `billing-workflow-${this.getDateString()}.log`);
+      Logger.info(`Log file: ${logFile}`, true);
 
       let startDate: string, endDate: string, invoiceNumber: number, outputDir: string;
 
       if (options.interactive || !options.startDate || !options.endDate) {
-        this.logger.info('Starting interactive input mode...');
+        Logger.info('Starting interactive input mode...');
         const inputs = await this.getInputsInteractively();
         startDate = inputs.startDate;
         endDate = inputs.endDate;
@@ -244,30 +258,30 @@ NOTES:
 
       // Validate dates
       if (!this.validateDate(startDate)) {
-        this.logger.error(`Invalid start date format: ${startDate}. Please use MM/DD/YYYY format.`);
+        Logger.error(`Invalid start date format: ${startDate}. Please use MM/DD/YYYY format.`);
         this.rl.close();
         process.exit(1);
       }
 
       if (!this.validateDate(endDate)) {
-        this.logger.error(`Invalid end date format: ${endDate}. Please use MM/DD/YYYY format.`);
+        Logger.error(`Invalid end date format: ${endDate}. Please use MM/DD/YYYY format.`);
         this.rl.close();
         process.exit(1);
       }
 
-      this.logger.info(`Configuration:`);
-      this.logger.info(`  • Date Range: ${startDate} to ${endDate}`);
-      this.logger.info(`  • Starting Invoice Number: ${invoiceNumber}`);
-      this.logger.info(`  • Output Directory: ${outputDir}`);
+      Logger.info(`Configuration:`);
+      Logger.info(`  • Date Range: ${startDate} to ${endDate}`);
+      Logger.info(`  • Starting Invoice Number: ${invoiceNumber}`);
+      Logger.info(`  • Output Directory: ${outputDir}`);
 
       // Ensure output directory exists
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
-        this.logger.info(`Created output directory: ${outputDir}`);
+        Logger.info(`Created output directory: ${outputDir}`);
       }
 
       // Step 1: Pull billing report from RouteGenie
-      this.logger.progress('Downloading billing report from RouteGenie...');
+      Logger.progress('Downloading billing report from RouteGenie...');
       await generateBillingReport(startDate, endDate, outputDir);
 
       const prefix = `${this.formatDateForFile(startDate)}-${this.formatDateForFile(endDate)}`;
@@ -277,16 +291,14 @@ NOTES:
         throw new Error(`Billing report not found at expected location: ${billingCsvPath}`);
       }
 
-      this.logger.success(`Billing report downloaded successfully`);
-
       // Step 2: Build invoices
-      this.logger.progress('Building invoices from billing data...');
+      Logger.progress('Building invoices from billing data...');
       const invoicesCsvPath = path.join(outputDir, 'invoices.csv');
       await buildInvoices(billingCsvPath, invoicesCsvPath);
-      this.logger.success('Invoices generated successfully');
+      Logger.success('Invoices generated successfully');
 
       // Step 3: Generate QuickBooks sync file
-      this.logger.progress('Generating QuickBooks sync file...');
+      Logger.progress('Generating QuickBooks sync file...');
 
       const qbCodesPath = resolveFromExecutable('mappings', 'QB_Service_codes.csv');
       if (!fs.existsSync(qbCodesPath)) {
@@ -303,33 +315,33 @@ NOTES:
       const today = new Date();
       await buildQBSyncFile(records, qbCodes, invoiceNumber, today, outputDir, payerMap);
 
-      this.logger.success('QuickBooks sync file generated successfully');
 
       // Summary
-      this.logger.success('🎉 Billing workflow completed successfully!');
-      this.logger.info('Generated files:');
-      this.logger.info(`  • Billing Report: ${billingCsvPath}`);
-      this.logger.info(`  • Invoices: ${invoicesCsvPath}`);
-      this.logger.info(`  • QuickBooks Sync: QB sync file in ${outputDir}`);
+      Logger.success(
+        `Billing workflow completed successfully - Generated files:\n  
+        • Billing Report: ${billingCsvPath}\n  
+        • Invoices: ${invoicesCsvPath}\n  
+        • QuickBooks Sync: QB sync file in ${outputDir}`,
+      );
 
       const fileCount = fs.readdirSync(outputDir).length;
-      this.logger.info(`Total files in output directory: ${fileCount}`);
+      Logger.info(`Total files in output directory: ${fileCount}`);
 
       // Wait for user to press enter before exiting
       await this.question('\n✅ Workflow completed! Press Enter to exit...');
 
     } catch (error: any) {
       console.log(error);
-      this.logger.error(`❌ Workflow failed:${error}`);
+      Logger.error(`❌ Workflow failed:${error}`);
 
       if (error.message?.includes('authenticate') || error.message?.includes('credentials')) {
-        this.logger.error('Authentication failed. Please check your RouteGenie credentials in .env file.');
-        this.logger.error('Make sure RG_CLIENT_ID and RG_CLIENT_SECRET are set in your .env file.');
+        Logger.error('Authentication failed. Please check your RouteGenie credentials in .env file.');
+        Logger.error('Make sure RG_CLIENT_ID and RG_CLIENT_SECRET are set in your .env file.');
       } else if (error.message?.includes('ENOENT')) {
-        this.logger.error('File not found. Please check that all required mapping files exist.');
-        this.logger.error('Required files: mappings/QB_Service_codes.csv');
+        Logger.error('File not found. Please check that all required mapping files exist.');
+        Logger.error('Required files: mappings/QB_Service_codes.csv');
       } else if (error.message?.includes('network') || error.message?.includes('timeout')) {
-        this.logger.error('Network error. Please check your internet connection and try again.');
+        Logger.error('Network error. Please check your internet connection and try again.');
       }
 
       // Wait for user to press enter before exiting even on error
@@ -337,10 +349,9 @@ NOTES:
       process.exit(1);
     } finally {
       this.rl.close();
-      this.logger.close();
+      Logger.close();
     }
   }
-  // ...existing code...
 }
 
 // Handle uncaught errors
