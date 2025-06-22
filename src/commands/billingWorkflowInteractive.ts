@@ -28,16 +28,6 @@ class BillingWorkflowInteractive {
   private options: WorkflowOptions;
   private rl: readline.Interface;
 
-  /**
-   * Normalizes payer names to handle PP_# format by converting to PP
-   */
-  private normalizePayer(payer: string): string {
-    if (payer && payer.match(/^PP_\d+$/)) {
-      return 'PP';
-    }
-    return payer;
-  }
-
   constructor(options: WorkflowOptions) {
     this.options = options;
     const logFile = options.logFile || resolveFromExecutable('logs', `billing-workflow-${this.getDateString()}.log`);
