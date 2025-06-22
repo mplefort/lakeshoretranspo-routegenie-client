@@ -7,19 +7,11 @@
     "build": "tsc",
     "dev": "ts-node src/commands/billingWorkflowInteractive.ts",
     "pull:billing": "ts-node src/commands/pullRouteGenie.ts",
-    "billing-workflow": "ts-node src/commands/billingWorkflowSimple.ts",
-    "billing-workflow:interactive": "ts-node src/commands/billingWorkflowInteractive.ts",
-    "install:nexe": "npm install nexe@4.0.0-rc.2 --save-dev",
-    "build:prep": "tsc && mkdir -p build",
-    "build:windows": "npm run build:prep && nexe dist/commands/billingWorkflowSimple.js --target windows-x64-18.20.8 --output build/billingWorkflow-windows.exe",
-    "build:linux": "npm run build:prep && nexe dist/commands/billingWorkflowSimple.js --target linux-x64-18.20.8 --output build/billingWorkflow-linux",
-    "build:macos": "npm run build:prep && nexe dist/commands/billingWorkflowSimple.js --target macos-x64-18.20.8 --output build/billingWorkflow-macos",
-    "build:interactive:windows": "npm run build:prep && nexe dist/commands/billingWorkflowInteractive.js --target windows-x64-18.20.8 --output build/billingWorkflow-interactive-windows.exe",
-    "build:interactive:linux": "npm run build:prep && nexe ./dist/commands/billingWorkflowInteractive.js -r \"mappings/*.csv\" --name billingWorkflow-interactive-linux --output build/billingWorkflow-interactive-linux --target linux-x64-18.20.8 --build",
-    "pkg:interactive:linux": "npm run build:prep && pkg dist/commands/billingWorkflowInteractive.js --targets linux-x64 --output build/billingWorkflow-interactive-linux-pkg",
-    "build:interactive:macos": "npm run build:prep && nexe dist/commands/billingWorkflowInteractive.js --target macos-x64-18.20.8 --output build/billingWorkflow-interactive-macos",
-    "build:executables": "npm run install:nexe && npm run build:windows && npm run build:linux && npm run build:macos",
-    "build:all": "npm run install:nexe && npm run build:windows && npm run build:linux && npm run build:macos && npm run build:interactive:windows && npm run build:interactive:linux && npm run build:interactive:macos",
+    "bundle": "webpack --mode production",
+    "build:prep": "npm run bundle && mkdir -p build",
+    "pkg:linux": "npm run build:prep && pkg dist/billingWorkflowInteractive.bundle.js --targets node18-linux-x64 --output build/billingWorkflow-interactive-linux-pkg",
+    "pkg:windows": "npm run build:prep && pkg dist/billingWorkflowInteractive.bundle.js --targets node18-windows-x64 --output build/billingWorkflow-interactive-windows-pkg.exe",
+    "pkg:macos": "npm run build:prep && pkg dist/billingWorkflowInteractive.bundle.js --targets node18-macos-x64 --output build/billingWorkflow-interactive-macos-pkg",
     "start": "./run-billing-workflow.sh"
   },
   "keywords": [],
@@ -36,18 +28,22 @@
   "devDependencies": {
     "@types/node": "^24.0.1",
     "@types/qs": "^6.14.0",
-    "nexe": "^4.0.0-rc.2",
     "pkg": "^5.8.1",
+    "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4"
   },
   "pkg": {
     "assets": [
       "mappings/**/*",
-      "node_modules/axios/**/*"
+      "dist/mappings/**/*"
     ],
     "targets": [
-      "node18-linux-x64"
+      "node18-linux-x64",
+      "node18-windows-x64",
+      "node18-macos-x64"
     ]
   }
 }

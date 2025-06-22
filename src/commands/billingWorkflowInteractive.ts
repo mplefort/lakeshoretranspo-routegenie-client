@@ -53,7 +53,7 @@ class BillingWorkflowInteractive {
   private validateDate(dateStr: string): boolean {
     const regex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/\d{4}$/;
     if (!regex.test(dateStr)) return false;
-    
+
     const [month, day, year] = dateStr.split('/').map(Number);
     const date = new Date(year, month - 1, day);
     return date.getMonth() === month - 1 && date.getDate() === day && date.getFullYear() === year;
@@ -152,7 +152,7 @@ NOTES:
     if (!startDate) {
       startDate = await this.question(`Enter start date (MM/DD/YYYY) [${defaultDate}]: `);
       if (!startDate) startDate = defaultDate;
-      
+
       while (!this.validateDate(startDate)) {
         this.logger.error('Invalid date format. Please use MM/DD/YYYY.');
         startDate = await this.question('Enter start date (MM/DD/YYYY): ');
@@ -162,7 +162,7 @@ NOTES:
     if (!endDate) {
       endDate = await this.question(`Enter end date (MM/DD/YYYY) [${defaultDate}]: `);
       if (!endDate) endDate = defaultDate;
-      
+
       while (!this.validateDate(endDate)) {
         this.logger.error('Invalid date format. Please use MM/DD/YYYY.');
         endDate = await this.question('Enter end date (MM/DD/YYYY): ');
@@ -233,23 +233,25 @@ NOTES:
         // Use provided options or defaults
         const today = new Date();
         const defaultDate = this.formatDateToMDY(today);
-        
+
         startDate = options.startDate || defaultDate;
         endDate = options.endDate || defaultDate;
         invoiceNumber = parseInt(options.invoiceNumber || '1000', 10);
         outputDir = path.resolve(options.outputDir || resolveFromExecutable('reports', 'billing'));
       }
 
-      this.rl.close();
+      // Don't close readline here if we're in interactive mode
 
       // Validate dates
       if (!this.validateDate(startDate)) {
         this.logger.error(`Invalid start date format: ${startDate}. Please use MM/DD/YYYY format.`);
+        this.rl.close();
         process.exit(1);
       }
-      
+
       if (!this.validateDate(endDate)) {
         this.logger.error(`Invalid end date format: ${endDate}. Please use MM/DD/YYYY format.`);
+        this.rl.close();
         process.exit(1);
       }
 
@@ -267,14 +269,14 @@ NOTES:
       // Step 1: Pull billing report from RouteGenie
       this.logger.progress('Downloading billing report from RouteGenie...');
       await generateBillingReport(startDate, endDate, outputDir);
-      
+
       const prefix = `${this.formatDateForFile(startDate)}-${this.formatDateForFile(endDate)}`;
       const billingCsvPath = path.join(outputDir, `${prefix}_billing.csv`);
-      
+
       if (!fs.existsSync(billingCsvPath)) {
         throw new Error(`Billing report not found at expected location: ${billingCsvPath}`);
       }
-      
+
       this.logger.success(`Billing report downloaded successfully`);
 
       // Step 2: Build invoices
@@ -285,7 +287,7 @@ NOTES:
 
       // Step 3: Generate QuickBooks sync file
       this.logger.progress('Generating QuickBooks sync file...');
-      
+
       const qbCodesPath = resolveFromExecutable('mappings', 'QB_Service_codes.csv');
       if (!fs.existsSync(qbCodesPath)) {
         throw new Error(`QuickBooks service codes mapping file not found: ${qbCodesPath}`);
@@ -293,14 +295,14 @@ NOTES:
 
       const qbCodes = await loadQBServiceCodes(qbCodesPath);
       const payerMap = await this.buildPayerMap(billingCsvPath);
-      
+
       // Get invoice records using the exported helpers
       const agg = await parseCsvRows(billingCsvPath).then(aggregateRows);
       const records = flattenAggregatedResults(agg);
-      
+
       const today = new Date();
       await buildQBSyncFile(records, qbCodes, invoiceNumber, today, outputDir, payerMap);
-      
+
       this.logger.success('QuickBooks sync file generated successfully');
 
       // Summary
@@ -309,13 +311,17 @@ NOTES:
       this.logger.info(`  • Billing Report: ${billingCsvPath}`);
       this.logger.info(`  • Invoices: ${invoicesCsvPath}`);
       this.logger.info(`  • QuickBooks Sync: QB sync file in ${outputDir}`);
-      
+
       const fileCount = fs.readdirSync(outputDir).length;
       this.logger.info(`Total files in output directory: ${fileCount}`);
 
+      // Wait for user to press enter before exiting
+      await this.question('\n✅ Workflow completed! Press Enter to exit...');
+
     } catch (error: any) {
-      this.logger.error('❌ Workflow failed:', error);
-      
+      console.log(error);
+      this.logger.error(`❌ Workflow failed:${error}`);
+
       if (error.message?.includes('authenticate') || error.message?.includes('credentials')) {
         this.logger.error('Authentication failed. Please check your RouteGenie credentials in .env file.');
         this.logger.error('Make sure RG_CLIENT_ID and RG_CLIENT_SECRET are set in your .env file.');
@@ -325,13 +331,16 @@ NOTES:
       } else if (error.message?.includes('network') || error.message?.includes('timeout')) {
         this.logger.error('Network error. Please check your internet connection and try again.');
       }
-      
+
+      // Wait for user to press enter before exiting even on error
+      await this.question('\n❌ Workflow failed! Press Enter to exit...');
       process.exit(1);
     } finally {
       this.rl.close();
       this.logger.close();
     }
   }
+  // ...existing code...
 }
 
 // Handle uncaught errors

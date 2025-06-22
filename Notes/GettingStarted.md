@@ -9,27 +9,12 @@ Before we dive into that thought could you tell me a little about how you plan t
 
 
 # Billing Rules:
-1. MCW/CC - First 5 miles free then rate of mileage for each.
+1. MCW/CC - First 5 miles free then rate of mileage for each. Record all miles
 2. Dead Miles:
   - I: All dead miles
   - MCW/CC: First 15 miles Free. If Ride>15 miles, all miles charged.
-
-# TODO:
-
-## invoiceBuilder.ts
-1. if Order no show then all other service codeds costs removed? Or charge for full ride + no show?
+3. if Order no show then all other service codeds costs removed? Or charge for full ride + no show?
 - No show needs to remove all other codes. This is done. Only inclusa charges a no show service code.
-
-2. Set Dead Miles free to 0.01. If over 15 miles dead miles then charge them for all but Inclusa. Inclusa charge all dead miles.
-
-3. Invoice group by passengers and payers. If 1 passenger has 2 payers in same period. Create two different invoices.
-
-4. IF payer is PP, overwrite billing frequency to be Daily.
-
-5. Query list of product services to check service code exists in Quickbooks
-
-6. Query list of passengers with reoccuring invoices to not upload over.
-
 
 
 ## Route Genie Checks
