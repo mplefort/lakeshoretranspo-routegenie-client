@@ -52,10 +52,10 @@ export type OutputRecordType = {
 /**
  * Main entry point for building invoices.
  */
-export async function buildInvoices(inputCsv: string, outputCsv: string): Promise<void> {
+export async function buildInvoices(inputCsv: string, outputCsv: string, startingInvoiceNumber: number = 1000): Promise<void> {
   const rows = await parseCsvRows(inputCsv);
   const agg = aggregateRows(rows);
-  const records = flattenAggregatedResults(agg);
+  const records = flattenAggregatedResults(agg, startingInvoiceNumber);
   await writeCsvRecords(outputCsv, records);
 }
 
@@ -90,9 +90,9 @@ async function parseCsvRows(inputCsv: string): Promise<RouteRow[]> {
         Object.keys(row).forEach(key => {
           row[key] = typeof row[key] === 'string' ? row[key].trim() : row[key];
         });
-        if (PAYER_FILTER.includes(row['Payer Name'])) {
+        // if (PAYER_FILTER.includes(row['Payer Name'])) {
           rows.push(row);
-        }
+        // }
       })
       .on('end', resolve);
   });
@@ -210,9 +210,9 @@ function aggregateOrderItems(row: RouteRow, agg: AggregationType, key: string, p
 /**
  * Flattens the aggregation object into an array of records for CSV output.
  */
-function flattenAggregatedResults(agg: AggregationType): OutputRecordType[] {
+function flattenAggregatedResults(agg: AggregationType, startingInvoiceNumber: number = 1000): OutputRecordType[] {
   const records: OutputRecordType[] = [];
-  let invoiceNum = 1000;
+  let invoiceNum = startingInvoiceNumber;
   for (const passenger of Object.keys(agg)) {
     const [fn, ln] = passenger.split('|');
     const custName = `${fn} ${ln}`.trim();
@@ -221,7 +221,7 @@ function flattenAggregatedResults(agg: AggregationType): OutputRecordType[] {
       const { qty, cost } = agg[passenger].items[item];
       // Pass through Billing Frequency if present
       const billingFrequency = agg[passenger].extra.billingFrequency || '';
-      records.push({
+      records.    push({
         InvoiceNumber: invoiceNum,
         CustomerName: custName,
         ServiceItem: item,
