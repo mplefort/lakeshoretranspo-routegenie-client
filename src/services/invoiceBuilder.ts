@@ -25,7 +25,7 @@ interface AggregatedItem {
   cost: number;
 }
 
-type Key = string; // "fn|ln"
+type Key = string; // "fn|ln|clientAuth"
 interface ExtraFields {
   caseWorker: string;
   caseWorkerEmail: string;
@@ -101,6 +101,8 @@ async function parseCsvRows(inputCsv: string): Promise<RouteRow[]> {
 
 /**
  * Aggregates all rows into a nested object by passenger and service item.
+ * Groups by passenger name AND client authorization to create separate invoices
+ * for different authorization numbers under the same passenger.
  */
 function aggregateRows(rows: RouteRow[]): AggregationType {
   const agg: AggregationType = {};
@@ -108,11 +110,15 @@ function aggregateRows(rows: RouteRow[]): AggregationType {
     const fn = row["Passenger's First Name"] || '';
     const ln = row["Passenger's Last Name"] || '';
     const payer = row['Payer Name'] || '';
-    const key = `${fn}|${ln}`;
+    
+    let clientAuth = row['Orders Client Authorization'] || '';
+    // Blank out if numeric and > 1E15. Remove the auto created RG auth numbers.
+    if (!isNaN(Number(clientAuth)) && Number(clientAuth) > 1e15) clientAuth = '';
+    
+    // Create key that includes both passenger name and client authorization
+    const key = `${fn}|${ln}|${clientAuth}`;
+    
     if (!agg[key]) {
-      let clientAuth = row['Orders Client Authorization'] || '';
-      // Blank out if numeric and > 1E15. Remove the auto created RG auth numbers.
-      if (!isNaN(Number(clientAuth)) && Number(clientAuth) > 1e15) clientAuth = '';
       agg[key] = {
         items: {},
         extra: {
@@ -209,19 +215,20 @@ function aggregateOrderItems(row: RouteRow, agg: AggregationType, key: string, p
 
 /**
  * Flattens the aggregation object into an array of records for CSV output.
+ * Each unique passenger-authorization combination gets its own invoice number.
  */
 function flattenAggregatedResults(agg: AggregationType, startingInvoiceNumber: number = 1000): OutputRecordType[] {
   const records: OutputRecordType[] = [];
   let invoiceNum = startingInvoiceNumber;
-  for (const passenger of Object.keys(agg)) {
-    const [fn, ln] = passenger.split('|');
+  for (const passengerAuth of Object.keys(agg)) {
+    const [fn, ln, clientAuth] = passengerAuth.split('|');
     const custName = `${fn} ${ln}`.trim();
-    const { caseWorker, caseWorkerEmail, clientAuth } = agg[passenger].extra;
-    for (const item of Object.keys(agg[passenger].items)) {
-      const { qty, cost } = agg[passenger].items[item];
+    const { caseWorker, caseWorkerEmail } = agg[passengerAuth].extra;
+    for (const item of Object.keys(agg[passengerAuth].items)) {
+      const { qty, cost } = agg[passengerAuth].items[item];
       // Pass through Billing Frequency if present
-      const billingFrequency = agg[passenger].extra.billingFrequency || '';
-      records.    push({
+      const billingFrequency = agg[passengerAuth].extra.billingFrequency || '';
+      records.push({
         InvoiceNumber: invoiceNum,
         CustomerName: custName,
         ServiceItem: item,
