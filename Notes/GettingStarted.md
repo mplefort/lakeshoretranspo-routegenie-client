@@ -9,7 +9,7 @@ Before we dive into that thought could you tell me a little about how you plan t
 
 
 # Billing Rules:
-1. MCW/CC - First 5 miles free then rate of mileage for each. Record all miles
+1. MCW/CC - First 5 miles free then rate of mileage for each. Record all miles. All others payers mileage from 0 miles charged.
 2. Dead Miles:
   - I: All dead miles
   - MCW/CC: First 15 miles Free. If Ride>15 miles, all miles charged.
