@@ -58,8 +58,11 @@ export async function buildQBSyncFile(records: OutputRecordType[], qbCodes: QBSe
     const customer = `${last}, ${first}`.trim();
     const code = rec.ServiceItem;
     const qb = qbCodes[code];
-    const payerId = rec.ServiceItem.split('-').pop() || '';
-    const payerFullName = payerMap && payerMap[payerId] ? payerMap[payerId] : payerId;
+    
+    // Use the original payer name from the record for lookup
+    const originalPayerName = rec.OriginalPayer || '';
+    const payerFullName = payerMap && payerMap[originalPayerName] ? payerMap[originalPayerName] : originalPayerName;
+    
     const authorizations1 = rec.ClientAuthorization || '';
     const invoiceBillingStatus = authorizations1 ? '' : 'Authorization Needed';
     
@@ -104,6 +107,9 @@ export async function buildQBSyncFile(records: OutputRecordType[], qbCodes: QBSe
   const allRows = mainRows;
   if (missingRows.length) {
     allRows.push({}); // blank line
+    allRows.push({
+      'Post?': 'WARNING THESE CODES NOT FOUND IN QUICKBOOKS, DO NOT COPY TO SYNC SHEET'
+    }); // warning row
     allRows.push(...missingRows);
     for (const row of missingRows) {
       console.warn(`WARNING: Service code not found in QB codes: ${row['Product/Services']}`);
