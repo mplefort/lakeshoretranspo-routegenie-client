@@ -14,7 +14,7 @@ interface QBServiceCode {
 }
 
 const QB_SYNC_HEADERS = [
-  'Post?', 'Invoice/Bill Date', 'Due Date', 'Invoice / Bill Number', 'Transaction Type', 'Customer', 'Vendor', 'Currency Code', 'Product/Services', 'Description', 'Qty', 'Discount %', 'Unit Price', 'Category', 'Location', 'Class', 'Tax', 'Payment/Receipt Reference', 'Payment/Receip Date', 'Payment/Receipt Account', 'Payment/Receip Amount', 'Payer', 'Invoice Billing Status', 'Authorizations 1', 'Billing Frequency'
+  'Post?', 'Invoice/Bill Date', 'Due Date', 'Invoice / Bill Number', 'Transaction Type', 'Customer', 'Vendor', 'Currency Code', 'Product/Services', 'Description', 'Qty', 'Discount %', 'Unit Price', 'Category', 'Location', 'Class', 'Tax', 'Payment/Receipt Reference', 'Payment/Receip Date', 'Payment/Receipt Account', 'Payment/Receip Amount', 'Payer', 'Invoice Billing Status', 'Authorization Code Exp', 'Auth Code (Customer)', 'Wheelchair', 'Case-Manager', 'Authorizations 2', 'Authorizations 1', 'Billing Frequency', 'Service End Date', 'Service Start Date'
 ];
 
 /**
@@ -93,8 +93,15 @@ export async function buildQBSyncFile(records: OutputRecordType[], qbCodes: QBSe
       'Payment/Receip Amount': '',
       'Payer': payerFullName,
       'Invoice Billing Status': invoiceBillingStatus,
+      'Authorization Code Exp': '',
+      'Auth Code (Customer)': '',
+      'Wheelchair': '',
+      'Case-Manager': rec.CaseWorker || '',
+      'Authorizations 2': '',
       'Authorizations 1': authorizations1,
-      'Billing Frequency': rec.BillingFrequency || ''
+      'Billing Frequency': rec.BillingFrequency || '',
+      'Service End Date': rec.ServiceEndDate || '',
+      'Service Start Date': rec.ServiceStartDate || ''
     };
     if (!qb) {
       missingRows.push(row);
