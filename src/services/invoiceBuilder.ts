@@ -42,6 +42,8 @@ interface ExtraFields {
   clientAuth: string;
   billingFrequency?: string;
   originalPayers: Set<string>; // Track original payer names for this passenger
+  serviceStartDate?: string; // Earliest Date Of Service
+  serviceEndDate?: string; // Latest Date Of Service
 }
 interface AggregationType {
   [key: string]: { items: Record<string, AggregatedItem>, extra: ExtraFields };
@@ -59,6 +61,8 @@ export type OutputRecordType = {
   ClientAuthorization: string;
   BillingFrequency?: string;
   OriginalPayer?: string; // Store original payer name for QB sync lookup
+  ServiceStartDate?: string; // Earliest Date Of Service
+  ServiceEndDate?: string; // Latest Date Of Service
 };
 
 /**
@@ -132,6 +136,9 @@ function aggregateRows(rows: RouteRow[]): AggregationType {
     // Create key that includes both passenger name and client authorization
     const key = `${fn}|${ln}|${clientAuth}`;
     
+    // Get the Date Of Service for this row
+    const dateOfService = row['Date Of Service'] || '';
+    
     if (!agg[key]) {
       agg[key] = {
         items: {},
@@ -140,9 +147,24 @@ function aggregateRows(rows: RouteRow[]): AggregationType {
           caseWorkerEmail: row['Custom Field: CaseWorker Email'] || '',
           clientAuth,
           billingFrequency: row['Custom Field: Billing Frequency'] || '',
-          originalPayers: new Set<string>()
+          originalPayers: new Set<string>(),
+          serviceStartDate: dateOfService,
+          serviceEndDate: dateOfService
         }
       };
+    }
+    
+    // Update service date range for this passenger
+    if (dateOfService) {
+      const currentStart = agg[key].extra.serviceStartDate;
+      const currentEnd = agg[key].extra.serviceEndDate;
+      
+      if (!currentStart || dateOfService < currentStart) {
+        agg[key].extra.serviceStartDate = dateOfService;
+      }
+      if (!currentEnd || dateOfService > currentEnd) {
+        agg[key].extra.serviceEndDate = dateOfService;
+      }
     }
     
     // Track original payer names for this passenger
@@ -248,7 +270,7 @@ function flattenAggregatedResults(agg: AggregationType, startingInvoiceNumber: n
   for (const passengerAuth of Object.keys(agg)) {
     const [fn, ln, clientAuth] = passengerAuth.split('|');
     const custName = `${fn} ${ln}`.trim();
-    const { caseWorker, caseWorkerEmail, originalPayers } = agg[passengerAuth].extra;
+    const { caseWorker, caseWorkerEmail, originalPayers, serviceStartDate, serviceEndDate } = agg[passengerAuth].extra;
     
     for (const item of Object.keys(agg[passengerAuth].items)) {
       const { qty, cost } = agg[passengerAuth].items[item];
@@ -277,7 +299,9 @@ function flattenAggregatedResults(agg: AggregationType, startingInvoiceNumber: n
         CaseWorkerEmail: caseWorkerEmail,
         ClientAuthorization: clientAuth,
         BillingFrequency: billingFrequency,
-        OriginalPayer: originalPayer
+        OriginalPayer: originalPayer,
+        ServiceStartDate: serviceStartDate,
+        ServiceEndDate: serviceEndDate
       });
     }
     invoiceNum++;
