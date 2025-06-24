@@ -9,6 +9,7 @@ import { Logger } from '../utils/logger';
 import { resolveFromExecutable } from '../utils/paths';
 import { parse as csvParse } from 'fast-csv';
 import { config } from 'dotenv';
+import packageJson from '../../package.json';
 
 // Load environment variables
 config();
@@ -120,7 +121,7 @@ class BillingWorkflowInteractive {
 
   private showHelp(): void {
     console.log(`
-Lakeshore Transportation Billing Workflow v1.0.0
+Lakeshore Transportation Billing Workflow v${packageJson.version}
 
 USAGE:
   billing-workflow [OPTIONS]
@@ -229,6 +230,7 @@ NOTES:
     }
 
     try {
+      console.log(`Lakeshore Transportation Billing Workflow v${packageJson.version}`);
       Logger.info('starting Lakeshore Transportation Billing Workflow', true);
       
       const logFile = this.options.logFile || resolveFromExecutable('logs', `billing-workflow-${this.getDateString()}.log`);
