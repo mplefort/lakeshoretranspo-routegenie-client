@@ -17,7 +17,6 @@ function normalizePayer(payer: string): string {
 }
 
 const CUSTOM_SERVICE_CODE_REGEX = /Service code:\s*([\w-]+),\s*Modifier:\s*([\w-]+),\s*Quantity:([\d.]+),\s*Cost:\s*([\d.]+)/g;
-const PAYER_FILTER = ['CC', 'I', 'MCW', 'PP'];
 const DETAIL_FIELDS = [
   ['Order Load Fee Service Code', 'Order Load Fee Modifier', 'Order Load Fee Quantity', 'Order Load Fee Cost'],
   ['Order Mileage Service Code', 'Order Mileage Modifier', 'Order Mileage Quantity', 'Order Mileage Cost'],
@@ -33,6 +32,7 @@ interface RouteRow {
 interface AggregatedItem {
   qty: number;
   cost: number;
+  orderIds: Set<string>; // Track unique Order IDs for this service item
 }
 
 type Key = string; // "fn|ln|clientAuth"
@@ -63,6 +63,7 @@ export type OutputRecordType = {
   OriginalPayer?: string; // Store original payer name for QB sync lookup
   ServiceStartDate?: string; // Earliest Date Of Service
   ServiceEndDate?: string; // Latest Date Of Service
+  OrderIds?: string[]; // Array of Order IDs for this service item
 };
 
 /**
@@ -106,10 +107,7 @@ async function parseCsvRows(inputCsv: string): Promise<RouteRow[]> {
         Object.keys(row).forEach(key => {
           row[key] = typeof row[key] === 'string' ? row[key].trim() : row[key];
         });
-        // Note: PAYER_FILTER is currently disabled. If re-enabled, should use normalizePayer()
-        // if (PAYER_FILTER.includes(normalizePayer(row['Payer Name']))) {
           rows.push(row);
-        // }
       })
       .on('end', resolve);
   });
@@ -128,6 +126,7 @@ function aggregateRows(rows: RouteRow[]): AggregationType {
     const ln = row["Passenger's Last Name"] || '';
     const originalPayer = row['Payer Name'] || '';
     const payer = normalizePayer(originalPayer);
+    const orderId = row['Order ID'] || ''; // Get Order ID from the row
     
     let clientAuth = row['Orders Client Authorization'] || '';
     // Blank out if numeric and > 1E15. Remove the auto created RG auth numbers.
@@ -170,9 +169,9 @@ function aggregateRows(rows: RouteRow[]): AggregationType {
     // Track original payer names for this passenger
     agg[key].extra.originalPayers.add(originalPayer);
     
-    aggregateDetailFields(row, agg, key, payer);
-    aggregateCustomServiceCodes(row, agg, key, payer);
-    aggregateOrderItems(row, agg, key, payer);
+    aggregateDetailFields(row, agg, key, payer, orderId);
+    aggregateCustomServiceCodes(row, agg, key, payer, orderId);
+    aggregateOrderItems(row, agg, key, payer, orderId);
   }
   return agg;
 }
@@ -180,7 +179,7 @@ function aggregateRows(rows: RouteRow[]): AggregationType {
 /**
  * Aggregates standard detail fields.
  */
-function aggregateDetailFields(row: RouteRow, agg: AggregationType, key: string, payer: string): void {
+function aggregateDetailFields(row: RouteRow, agg: AggregationType, key: string, payer: string, orderId: string): void {
   for (const [svc, mod, qty, cost] of DETAIL_FIELDS) {
     const svcCode = row[svc];
     if (!svcCode) continue;
@@ -201,9 +200,10 @@ function aggregateDetailFields(row: RouteRow, agg: AggregationType, key: string,
       
       if (!code || quantity === 0) continue;
       const itemKey = modifier ? `${code}-${modifier}-${payer}`:`${code}-${payer}`;
-      if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0 };
+      if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0, orderIds: new Set<string>() };
       agg[key].items[itemKey].qty += quantity;
       agg[key].items[itemKey].cost += costVal;
+      if (orderId) agg[key].items[itemKey].orderIds.add(orderId);
     }
   }
 }
@@ -214,7 +214,7 @@ function aggregateDetailFields(row: RouteRow, agg: AggregationType, key: string,
  * - S0215: Only aggregate for 'CC', 'MCW', or 'PP' if quantity >= 15
  * - All others: aggregate as normal
  */
-function aggregateCustomServiceCodes(row: RouteRow, agg: AggregationType, key: string, payer: string): void {
+function aggregateCustomServiceCodes(row: RouteRow, agg: AggregationType, key: string, payer: string, orderId: string): void {
   const customField = row['Order Custom Service codes'];
   if (customField && typeof customField === 'string') {
     let match;
@@ -226,18 +226,21 @@ function aggregateCustomServiceCodes(row: RouteRow, agg: AggregationType, key: s
       const itemKey = `${code}-${modifier}-${payer}`;
       if (code === 'S0215') {
         if (payer === 'I') {
-          if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0 };
+          if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0, orderIds: new Set<string>() };
           agg[key].items[itemKey].qty += quantity;
           agg[key].items[itemKey].cost += costVal;
+          if (orderId) agg[key].items[itemKey].orderIds.add(orderId);
         } else if ((payer === 'CC' || payer === 'MCW' || payer === 'PP') && quantity >= 15) {
-          if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0 };
+          if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0, orderIds: new Set<string>() };
           agg[key].items[itemKey].qty += quantity;
           agg[key].items[itemKey].cost += costVal;
+          if (orderId) agg[key].items[itemKey].orderIds.add(orderId);
         }
       } else {
-        if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0 };
+        if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0, orderIds: new Set<string>() };
         agg[key].items[itemKey].qty += quantity;
         agg[key].items[itemKey].cost += costVal;
+        if (orderId) agg[key].items[itemKey].orderIds.add(orderId);
       }
     }
   }
@@ -246,16 +249,17 @@ function aggregateCustomServiceCodes(row: RouteRow, agg: AggregationType, key: s
 /**
  * Aggregates RG Invoice items that report as order items (wait time, surcharges, etc).
  */
-function aggregateOrderItems(row: RouteRow, agg: AggregationType, key: string, payer: string): void {
+function aggregateOrderItems(row: RouteRow, agg: AggregationType, key: string, payer: string, orderId: string): void {
   const orderItems = row['Order Item(s)'];
   const svcCodes = row['Invoice Item Service Code(s)'];
   const mods = row['Invoice Item Modifier(s)'];
   if (orderItems && svcCodes && mods) {
     const parsed = parseOrderItems(orderItems, svcCodes, mods, payer);
     for (const { itemKey, quantity, totalCost } of parsed) {
-      if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0 };
+      if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0, orderIds: new Set<string>() };
       agg[key].items[itemKey].qty += quantity;
       agg[key].items[itemKey].cost += totalCost;
+      if (orderId) agg[key].items[itemKey].orderIds.add(orderId);
     }
   }
 }
@@ -273,7 +277,7 @@ function flattenAggregatedResults(agg: AggregationType, startingInvoiceNumber: n
     const { caseWorker, caseWorkerEmail, originalPayers, serviceStartDate, serviceEndDate } = agg[passengerAuth].extra;
     
     for (const item of Object.keys(agg[passengerAuth].items)) {
-      const { qty, cost } = agg[passengerAuth].items[item];
+      const { qty, cost, orderIds } = agg[passengerAuth].items[item];
       // Pass through Billing Frequency if present
       const billingFrequency = agg[passengerAuth].extra.billingFrequency || '';
       
@@ -301,7 +305,8 @@ function flattenAggregatedResults(agg: AggregationType, startingInvoiceNumber: n
         BillingFrequency: billingFrequency,
         OriginalPayer: originalPayer,
         ServiceStartDate: serviceStartDate,
-        ServiceEndDate: serviceEndDate
+        ServiceEndDate: serviceEndDate,
+        OrderIds: Array.from(orderIds).sort() // Convert Set to sorted array
       });
     }
     invoiceNum++;

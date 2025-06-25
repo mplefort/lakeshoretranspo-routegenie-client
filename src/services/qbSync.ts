@@ -69,6 +69,12 @@ export async function buildQBSyncFile(records: OutputRecordType[], qbCodes: QBSe
     // Use the invoice number from the record (which is already correctly assigned)
     const invoiceNumber = rec.InvoiceNumber;
     
+    // Build description with Order IDs
+    let description = qb?.description || '';
+    if (rec.OrderIds && rec.OrderIds.length > 0) {
+      description += ` | Order IDs: ${rec.OrderIds.join(', ')}`;
+    }
+    
     const row = {
       'Post?': 'Yes',
       'Invoice/Bill Date': dateFmt(today),
@@ -79,7 +85,7 @@ export async function buildQBSyncFile(records: OutputRecordType[], qbCodes: QBSe
       'Vendor': '',
       'Currency Code': 'USD',
       'Product/Services': code,
-      'Description': qb?.description || '',
+      'Description': description,
       'Qty': rec.Quantity,
       'Discount %': '',
       'Unit Price': qb?.rate || '',
