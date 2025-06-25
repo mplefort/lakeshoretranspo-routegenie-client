@@ -8,14 +8,6 @@ You need to connect a Payer to the API, and would then be able to make authentic
 Before we dive into that thought could you tell me a little about how you plan to use the API so I can get a better idea about how to steer us toward the configuration that suits your needs best?
 
 
-# Billing Rules:
-1. MCW/CC - First 5 miles free then rate of mileage for each. Record all miles. All others payers mileage from 0 miles charged.
-2. Dead Miles:
-  - I: All dead miles
-  - MCW/CC: First 15 miles Free. If Ride>15 miles, all miles charged.
-3. if Order no show then all other service codeds costs removed? Or charge for full ride + no show?
-- No show needs to remove all other codes. This is done. Only inclusa charges a no show service code.
-
 
 ## Route Genie Checks
 1. 5695	5/27/2025	No show	Inclusa	I	REYNALDO	TREVINO - NO show but added "Order Pick Up Wait Time Quantity" 1 for 12.6 but did not add Service code/modifier.
