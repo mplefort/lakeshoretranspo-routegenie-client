@@ -23,6 +23,7 @@ interface WorkflowOptions {
   help?: boolean;
   interactive?: boolean;
   debug?: boolean;
+  billingFrequencyFilter?: string;
 }
 
 class BillingWorkflowInteractive {
@@ -151,11 +152,34 @@ NOTES:
 `);
   }
 
-  private async getInputsInteractively(): Promise<{ startDate: string; endDate: string; invoiceNumber: number; outputDir: string }> {
+  private async getInputsInteractively(): Promise<{ startDate: string; endDate: string; invoiceNumber: number; outputDir: string; billingFrequencyFilter: string }> {
     const today = new Date();
     const defaultDate = this.formatDateToMDY(today);
     const defaultOutputDir = resolveFromExecutable('reports', 'billing');
     const defaultInvoiceNum = '1000';
+
+    // Load billing frequency options from QB_Invoice_fields.csv
+    const qbInvoiceFieldsPath = resolveFromExecutable('mappings', 'QB_Invoice_fields.csv');
+    const freqSet = new Set<string>();
+    await new Promise<void>((resolve, reject) => {
+      fs.createReadStream(qbInvoiceFieldsPath)
+        .pipe(csvParse({ headers: true }))
+        .on('data', (row: any) => {
+          if (row['Billing Frequency']) freqSet.add(row['Billing Frequency']);
+        })
+        .on('end', resolve)
+        .on('error', reject);
+    });
+    const freqOptions = Array.from(freqSet).sort();
+    const freqList = ['All', ...freqOptions];
+
+    // Prompt for billing frequency filter
+    let freqChoice: string | undefined;
+    let selectedFreq = 'All';
+    const freqPrompt = freqList.map((f, i) => `  ${i}. ${f}`).join('\n');
+    freqChoice = await this.question(`Select Billing Frequency filter:\n${freqPrompt}\nChoice [0]: `);
+    const idx = freqChoice ? parseInt(freqChoice, 10) : 0;
+    if (!isNaN(idx) && idx >= 0 && idx < freqList.length) selectedFreq = freqList[idx];
 
     let startDate = this.options.startDate;
     let endDate = this.options.endDate;
@@ -196,7 +220,8 @@ NOTES:
       startDate,
       endDate,
       invoiceNumber: parseInt(invoiceNumber, 10),
-      outputDir: path.resolve(outputDir)
+      outputDir: path.resolve(outputDir),
+      billingFrequencyFilter: selectedFreq
     };
   }
 
@@ -236,7 +261,7 @@ NOTES:
       const logFile = this.options.logFile || resolveFromExecutable('logs', `billing-workflow-${this.getDateString()}.log`);
       Logger.info(`Log file: ${logFile}`, true);
 
-      let startDate: string, endDate: string, invoiceNumber: number, outputDir: string;
+      let startDate: string, endDate: string, invoiceNumber: number, outputDir: string, billingFrequencyFilter: string;
 
       if (options.interactive || !options.startDate || !options.endDate) {
         Logger.info('Starting interactive input mode...');
@@ -245,6 +270,7 @@ NOTES:
         endDate = inputs.endDate;
         invoiceNumber = inputs.invoiceNumber;
         outputDir = inputs.outputDir;
+        billingFrequencyFilter = inputs.billingFrequencyFilter;
       } else {
         // Use provided options or defaults
         const today = new Date();
@@ -254,6 +280,7 @@ NOTES:
         endDate = options.endDate || defaultDate;
         invoiceNumber = parseInt(options.invoiceNumber || '1000', 10);
         outputDir = path.resolve(options.outputDir || resolveFromExecutable('reports', 'billing'));
+        billingFrequencyFilter = 'All';
       }
 
       // Don't close readline here if we're in interactive mode
@@ -315,7 +342,7 @@ NOTES:
       const records = flattenAggregatedResults(agg, invoiceNumber);
 
       const today = new Date();
-      await buildQBSyncFile(records, qbCodes, invoiceNumber, today, outputDir, payerMap);
+      await buildQBSyncFile(records, qbCodes, invoiceNumber, today, outputDir, payerMap, billingFrequencyFilter);
 
 
       // Summary
