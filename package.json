@@ -12,7 +12,8 @@
     "pkg:linux": "npm run build:prep && pkg dist/billingWorkflowInteractive.bundle.js --targets node18-linux-x64 --output build/billingWorkflow-interactive-linux-pkg",
     "pkg:windows": "npm run build:prep && pkg dist/billingWorkflowInteractive.bundle.js --targets node18-windows-x64 --output build/billingWorkflow-interactive-windows-pkg.exe",
     "pkg:macos": "npm run build:prep && pkg dist/billingWorkflowInteractive.bundle.js --targets node18-macos-x64 --output build/billingWorkflow-interactive-macos-pkg",
-    "start": "./run-billing-workflow.sh"
+    "start": "./run-billing-workflow.sh",
+    "qb:test": "ts-node src/commands/testQuickBooksAdapter.ts"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,7 @@
     "csv-writer": "^1.6.0",
     "dotenv": "^16.5.0",
     "fast-csv": "^5.0.2",
+    "node-quickbooks": "^2.0.46",
     "qs": "^6.14.0"
   },
   "devDependencies": {
