@@ -51,7 +51,7 @@ interface AggregationType {
 
 // Output record type for invoice and QB sync
 export type OutputRecordType = {
-  InvoiceNumber: number;
+  InvoiceNumber?: number; // Optional, will be assigned in buildQBSyncFile
   CustomerName: string;
   ServiceItem: string;
   Quantity: number;
@@ -64,6 +64,7 @@ export type OutputRecordType = {
   ServiceStartDate?: string; // Earliest Date Of Service
   ServiceEndDate?: string; // Latest Date Of Service
   OrderIds?: string[]; // Array of Order IDs for this service item
+  PassengerKey?: string; // Key to track passenger-auth combinations for invoice numbering
 };
 
 /**
@@ -270,7 +271,6 @@ function aggregateOrderItems(row: RouteRow, agg: AggregationType, key: string, p
  */
 function flattenAggregatedResults(agg: AggregationType, startingInvoiceNumber: number = 1000): OutputRecordType[] {
   const records: OutputRecordType[] = [];
-  let invoiceNum = startingInvoiceNumber;
   for (const passengerAuth of Object.keys(agg)) {
     const [fn, ln, clientAuth] = passengerAuth.split('|');
     const custName = `${fn} ${ln}`.trim();
@@ -294,7 +294,6 @@ function flattenAggregatedResults(agg: AggregationType, startingInvoiceNumber: n
       }
       
       records.push({
-        InvoiceNumber: invoiceNum,
         CustomerName: custName,
         ServiceItem: item,
         Quantity: qty,
@@ -306,10 +305,10 @@ function flattenAggregatedResults(agg: AggregationType, startingInvoiceNumber: n
         OriginalPayer: originalPayer,
         ServiceStartDate: serviceStartDate,
         ServiceEndDate: serviceEndDate,
-        OrderIds: Array.from(orderIds).sort() // Convert Set to sorted array
+        OrderIds: Array.from(orderIds).sort(), // Convert Set to sorted array
+        PassengerKey: passengerAuth // Store the key for invoice numbering
       });
     }
-    invoiceNum++;
   }
   return records;
 }
@@ -331,7 +330,19 @@ async function writeCsvRecords(outputCsv: string, records: OutputRecordType[]): 
       { id: 'ClientAuthorization', title: 'Orders Client Authorization' }
     ]
   });
-  await writer.writeRecords(records);
+  
+  // Assign invoice numbers for the invoice CSV (all records get numbers)
+  let invoiceNum = 1000;
+  const seenPassengerKeys = new Set<string>();
+  const recordsWithNumbers = records.map(rec => {
+    if (!seenPassengerKeys.has(rec.PassengerKey || '')) {
+      seenPassengerKeys.add(rec.PassengerKey || '');
+      if (rec.PassengerKey) invoiceNum++;
+    }
+    return { ...rec, InvoiceNumber: invoiceNum - 1 };
+  });
+  
+  await writer.writeRecords(recordsWithNumbers);
   Logger.success(`Invoices written to ${outputCsv}`);
 }
 

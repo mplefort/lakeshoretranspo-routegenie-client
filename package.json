@@ -1,18 +1,17 @@
 {
   "name": "lakeshoretransp-routegenie-client",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "dev": "ts-node src/commands/billingWorkflowInteractive.ts",
+    "start": "ts-node src/commands/billingWorkflowInteractive.ts",
     "pull:billing": "ts-node src/commands/pullRouteGenie.ts",
     "bundle": "webpack --mode production",
     "build:prep": "npm run bundle && mkdir -p build",
     "pkg:linux": "npm run build:prep && pkg dist/billingWorkflowInteractive.bundle.js --targets node18-linux-x64 --output build/billingWorkflow-interactive-linux-pkg",
     "pkg:windows": "npm run build:prep && pkg dist/billingWorkflowInteractive.bundle.js --targets node18-windows-x64 --output build/billingWorkflow-interactive-windows-pkg.exe",
-    "pkg:macos": "npm run build:prep && pkg dist/billingWorkflowInteractive.bundle.js --targets node18-macos-x64 --output build/billingWorkflow-interactive-macos-pkg",
-    "start": "./run-billing-workflow.sh"
+    "pkg:macos": "npm run build:prep && pkg dist/billingWorkflowInteractive.bundle.js --targets node18-macos-x64 --output build/billingWorkflow-interactive-macos-pkg"
   },
   "keywords": [],
   "author": "",
