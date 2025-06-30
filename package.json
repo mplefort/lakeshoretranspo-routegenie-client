@@ -25,11 +25,13 @@
     "csv-writer": "^1.6.0",
     "dotenv": "^16.5.0",
     "fast-csv": "^5.0.2",
-    "qs": "^6.14.0"
+    "qs": "^6.14.0",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "@types/node": "^24.0.1",
     "@types/qs": "^6.14.0",
+    "@types/sqlite3": "^3.1.11",
     "pkg": "^5.8.1",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
@@ -40,7 +42,8 @@
   "pkg": {
     "assets": [
       "mappings/**/*",
-      "dist/mappings/**/*"
+      "dist/mappings/**/*",
+      "data/**/*"
     ],
     "targets": [
       "node18-linux-x64",
