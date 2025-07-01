@@ -1,4 +1,5 @@
 const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   mode: 'production',
@@ -31,5 +32,22 @@ module.exports = {
   externals: {
     // Mark these as external to avoid bundling them
     'readline': 'commonjs readline',
+    'sqlite3': 'commonjs sqlite3',
   },
+  plugins: [
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: 'data',
+          to: 'data',
+          noErrorOnMissing: true,
+        },
+        {
+          from: 'mappings',
+          to: 'mappings',
+          noErrorOnMissing: false,
+        },
+      ],
+    }),
+  ],
 };
