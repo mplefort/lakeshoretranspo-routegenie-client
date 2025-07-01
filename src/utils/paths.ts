@@ -5,8 +5,14 @@ import path from 'path';
  * This ensures paths are relative to the executable location, not the current working directory.
  */
 export function getExecutableDir(): string {
-  // Check if we're running in a nexe/pkg environment
-  if ((process as any).pkg || process.execPath.includes('nexe') || process.argv[0].includes('nexe')) {
+  // Check if we're running in a pkg environment
+  if ((process as any).pkg) {
+    // In pkg executables, use the directory where the executable is located
+    return path.dirname(process.execPath);
+  }
+  
+  // Check if we're running in a nexe environment
+  if (process.execPath.includes('nexe') || process.argv[0].includes('nexe')) {
     // In packaged executables, resources are available at the root of the virtual filesystem
     return process.cwd();
   }

@@ -7,6 +7,25 @@
 3. No show removes all other codes. This is done. Only inclusa charges a no show service code.
 4. Billing Freq Filter: Daily, Weekly, Monthly. Creates qb sync only for selected frequency and Blanks in billing freq
 
+## V1.0.4
+- Google maps API added to replace RG
+- data/mileage_cache.db to store cache of Google Maps routes. Schema below. Use DB Browser to edit overwrite fields as needed.
+CREATE TABLE mileage_cache (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          passenger_last_name TEXT NOT NULL,
+          passenger_first_name TEXT NOT NULL,
+          PU_address TEXT NOT NULL,
+          DO_address TEXT NOT NULL,
+          RG_miles REAL NOT NULL,
+          Google_miles REAL NOT NULL,
+          overwrite_miles REAL,
+          RG_dead_miles REAL NOT NULL,
+          Google_dead_miles REAL NOT NULL,
+          overwrite_dead_miles REAL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
 ## V1.0.3
 - Billing frequency filter added
 - Invoice numbers always sequential increment.

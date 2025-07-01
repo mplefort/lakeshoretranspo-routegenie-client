@@ -3,6 +3,7 @@ import { parse } from 'fast-csv';
 import { createObjectCsvWriter } from 'csv-writer';
 import path from 'path';
 import { Logger } from '../utils/logger';
+import { mileageCache, type MileageCacheEntry, type CacheQueryParams } from './mileageCache';
 
 // --- CONSTANTS & TYPES ---
 
@@ -71,10 +72,20 @@ export type OutputRecordType = {
  * Main entry point for building invoices.
  */
 export async function buildInvoices(inputCsv: string, outputCsv: string, startingInvoiceNumber: number = 1000): Promise<void> {
-  const rows = await parseCsvRows(inputCsv);
-  const agg = aggregateRows(rows);
-  const records = flattenAggregatedResults(agg, startingInvoiceNumber);
-  await writeCsvRecords(outputCsv, records);
+  // Initialize the mileage cache
+  await mileageCache.initialize();
+  Logger.info('Mileage cache initialized for invoice building');
+  
+  try {
+    const rows = await parseCsvRows(inputCsv);
+    const agg = await aggregateRows(rows);
+    const records = flattenAggregatedResults(agg, startingInvoiceNumber);
+    await writeCsvRecords(outputCsv, records);
+  } finally {
+    // Always close the cache connection
+    await mileageCache.close();
+    Logger.info('Mileage cache connection closed');
+  }
 }
 
 /**
@@ -120,8 +131,9 @@ async function parseCsvRows(inputCsv: string): Promise<RouteRow[]> {
  * Groups by passenger name AND client authorization to create separate invoices
  * for different authorization numbers under the same passenger.
  */
-function aggregateRows(rows: RouteRow[]): AggregationType {
+async function aggregateRows(rows: RouteRow[]): Promise<AggregationType> {
   const agg: AggregationType = {};
+  
   for (const row of rows) {
     const fn = row["Passenger's First Name"] || '';
     const ln = row["Passenger's Last Name"] || '';
@@ -170,8 +182,11 @@ function aggregateRows(rows: RouteRow[]): AggregationType {
     // Track original payer names for this passenger
     agg[key].extra.originalPayers.add(originalPayer);
     
-    aggregateDetailFields(row, agg, key, payer, orderId);
-    aggregateCustomServiceCodes(row, agg, key, payer, orderId);
+    // Get cached mileage data for this row
+    const cacheEntry = await getCachedMileageData(row);
+    
+    await aggregateDetailFields(row, agg, key, payer, orderId, cacheEntry);
+    await aggregateCustomServiceCodes(row, agg, key, payer, orderId, cacheEntry);
     aggregateOrderItems(row, agg, key, payer, orderId);
   }
   return agg;
@@ -180,7 +195,7 @@ function aggregateRows(rows: RouteRow[]): AggregationType {
 /**
  * Aggregates standard detail fields.
  */
-function aggregateDetailFields(row: RouteRow, agg: AggregationType, key: string, payer: string, orderId: string): void {
+async function aggregateDetailFields(row: RouteRow, agg: AggregationType, key: string, payer: string, orderId: string, cacheEntry: MileageCacheEntry | null): Promise<void> {
   for (const [svc, mod, qty, cost] of DETAIL_FIELDS) {
     const svcCode = row[svc];
     if (!svcCode) continue;
@@ -193,6 +208,13 @@ function aggregateDetailFields(row: RouteRow, agg: AggregationType, key: string,
       const modifier = modCodes[i] || '';
       let quantity = Number(qtyVals[i] || 0);
       const costVal = Number(costVals[i] || 0);
+      
+      // Use cached mileage for S0215 service codes
+      if (code === 'S0215' && qty === 'Order Mileage Quantity' && cacheEntry) {
+        const cachedMiles = mileageCache.getCachedMileage(cacheEntry);
+        quantity = cachedMiles;
+        Logger.info(`Using cached mileage for ${key}: ${cachedMiles} miles (RG: ${cacheEntry.RG_miles}, Google: ${cacheEntry.Google_miles})`);
+      }
       
       // Special logic for Order Mileage Quantity: MCW/CC payers get 0 miles if <5 miles
       if (qty === 'Order Mileage Quantity' && (payer === 'MCW' || payer === 'CC') && quantity < 5) {
@@ -215,15 +237,23 @@ function aggregateDetailFields(row: RouteRow, agg: AggregationType, key: string,
  * - S0215: Only aggregate for 'CC', 'MCW', or 'PP' if quantity >= 15
  * - All others: aggregate as normal
  */
-function aggregateCustomServiceCodes(row: RouteRow, agg: AggregationType, key: string, payer: string, orderId: string): void {
+async function aggregateCustomServiceCodes(row: RouteRow, agg: AggregationType, key: string, payer: string, orderId: string, cacheEntry: MileageCacheEntry | null): Promise<void> {
   const customField = row['Order Custom Service codes'];
   if (customField && typeof customField === 'string') {
     let match;
     while ((match = CUSTOM_SERVICE_CODE_REGEX.exec(customField)) !== null) {
       const code = match[1];
       const modifier = match[2];
-      const quantity = Number(match[3]);
+      let quantity = Number(match[3]);
       const costVal = Number(match[4]);
+      
+      // Use cached dead mileage for S0215 service codes
+      if (code === 'S0215' && cacheEntry) {
+        const cachedDeadMiles = mileageCache.getCachedDeadMileage(cacheEntry);
+        quantity = cachedDeadMiles;
+        Logger.info(`Using cached dead mileage for ${key}: ${cachedDeadMiles} miles (RG: ${cacheEntry.RG_dead_miles}, Google: ${cacheEntry.Google_dead_miles})`);
+      }
+      
       const itemKey = `${code}-${modifier}-${payer}`;
       if (code === 'S0215') {
         if (payer === 'I') {
@@ -382,6 +412,55 @@ function parseOrderItems(
     results.push({ itemKey, quantity, totalCost: +(quantity * unitCost).toFixed(2) });
   }
   return results;
+}
+
+/**
+ * Helper function to get cached mileage data or create a new cache entry
+ */
+async function getCachedMileageData(row: RouteRow): Promise<MileageCacheEntry | null> {
+  const firstName = row["Passenger's First Name"] || '';
+  const lastName = row["Passenger's Last Name"] || '';
+  const puAddress = row['Pick Up Address'] || '';
+  const doAddress = row['Order Drop Off Address'] || '';
+  const rgMiles = Number(row['Order Mileage'] || 0);
+  
+  // Get RG dead miles from custom service codes
+  let rgDeadMiles = 0;
+  const customField = row['Order Custom Service codes'];
+  if (customField && typeof customField === 'string') {
+    const deadMileMatch = customField.match(/Service code:\s*S0215[^,]*,\s*Modifier:[^,]*,\s*Quantity:([\d.]+)/);
+    if (deadMileMatch) {
+      rgDeadMiles = Number(deadMileMatch[1]);
+    }
+  }
+  
+  if (!firstName || !lastName || !puAddress || !doAddress) {
+    Logger.warn(`Missing required address data for ${firstName} ${lastName}, skipping cache lookup`);
+    return null;
+  }
+  
+  const cacheParams: CacheQueryParams = {
+    firstName,
+    lastName,
+    puAddress,
+    doAddress
+  };
+  
+  try {
+    // Try to find existing cache entry
+    let cacheEntry = await mileageCache.findCacheEntry(cacheParams);
+    
+    if (!cacheEntry) {
+      // Create new cache entry with Google Maps API calls
+      Logger.info(`Creating new cache entry for ${firstName} ${lastName}`);
+      cacheEntry = await mileageCache.createCacheEntry(cacheParams, rgMiles, rgDeadMiles);
+    }
+    
+    return cacheEntry;
+  } catch (error) {
+    Logger.error(`Error with mileage cache for ${firstName} ${lastName}:`, error);
+    return null;
+  }
 }
 
 export { flattenAggregatedResults, parseCsvRows, aggregateRows };
