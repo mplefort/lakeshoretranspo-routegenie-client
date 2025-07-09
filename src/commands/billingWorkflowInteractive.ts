@@ -9,10 +9,14 @@ import { Logger } from '../utils/logger';
 import { resolveFromExecutable } from '../utils/paths';
 import { parse as csvParse } from 'fast-csv';
 import { config } from 'dotenv';
-import packageJson from '../../package.json';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 // Load environment variables
 config();
+
+// Load package.json
+const packageJson = JSON.parse(readFileSync(resolveFromExecutable('package.json'), 'utf8'));
 
 interface WorkflowOptions {
   startDate?: string;

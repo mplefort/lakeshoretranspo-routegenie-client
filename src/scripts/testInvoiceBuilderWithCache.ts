@@ -6,6 +6,7 @@
 
 import { buildInvoices } from '../services/invoiceBuilder';
 import { Logger } from '../utils/logger';
+import { resolveFromExecutable } from '../utils/paths';
 import path from 'path';
 
 async function testInvoiceBuilderWithCache() {
@@ -18,7 +19,7 @@ async function testInvoiceBuilderWithCache() {
     console.log(`Output: ${outputCsv}`);
     
     // Initialize logger for this test
-    const logPath = path.join(__dirname, '../../logs/test-invoice-builder-cache.log');
+    const logPath = resolveFromExecutable('logs', 'test-invoice-builder-cache.log');
     Logger.initialize(logPath, true);
     
     await buildInvoices(inputCsv, outputCsv, 2000);

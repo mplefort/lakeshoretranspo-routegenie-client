@@ -17,4 +17,11 @@ export const mainConfig: Configuration = {
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
   },
+  target: 'electron-main',
+  externals: {
+    // Mark these as external to avoid bundling them
+    'readline': 'commonjs readline',
+    'better-sqlite3': 'commonjs better-sqlite3',
+  },
+  
 };

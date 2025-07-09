@@ -16,7 +16,8 @@
     },
     "strict": true,
     "rootDir": "src",
-    "allowSyntheticDefaultImports": true
+    "jsx": "react-jsx",
+    "lib": ["ES6", "DOM", "DOM.Iterable"]
   },
   "include": ["src/**/*"]
 }
