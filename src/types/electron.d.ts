@@ -4,6 +4,20 @@ export interface HelloResponse {
   source: string;
 }
 
+export interface BillingWorkflowFormInputs {
+  startDate: string;
+  endDate: string;
+  billingFrequency: 'All' | 'Daily' | 'Weekly' | 'Monthly';
+  invoiceNumber: number;
+  outputFolder: string;
+}
+
+export interface BillingWorkflowResult {
+  success: boolean;
+  message: string;
+  outputDir: string;
+}
+
 export interface IElectronAPI {
   // Hello service
   hello: {
@@ -24,6 +38,11 @@ export interface IElectronAPI {
   
   // Invoice operations
   buildInvoices: (inputPath: string, outputPath: string, startingNumber: number) => Promise<void>;
+  
+  // Billing workflow operations
+  billingWorkflow: {
+    execute: (inputs: BillingWorkflowFormInputs) => Promise<BillingWorkflowResult>;
+  };
   
   // QB Sync operations
   qb: {

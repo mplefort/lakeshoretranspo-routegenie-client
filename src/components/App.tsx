@@ -1,29 +1,44 @@
 import React, { useState } from 'react';
 import BillingWorkflowModule from './modules/BillingWorkflowModule';
-
-interface BillingWorkflowData {
-  billingFrequency: 'All' | 'Daily' | 'Weekly' | 'Monthly';
-  startDate: string;
-  endDate: string;
-  outputFolder: string;
-  invoiceNumber: number;
-}
+import { BillingWorkflowFormInputs } from '../types/electron';
 
 const App: React.FC = () => {
   const [showBillingForm, setShowBillingForm] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [lastResult, setLastResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const handleCreateBilling = () => {
     setShowBillingForm(true);
+    setLastResult(null); // Clear previous results
   };
 
-  const handleBillingSubmit = (data: BillingWorkflowData) => {
+  const handleBillingSubmit = async (data: BillingWorkflowFormInputs) => {
     console.log('Billing workflow data:', data);
-    // TODO: Implement billing workflow logic via IPC
-    setShowBillingForm(false);
+    setIsProcessing(true);
+    
+    try {
+      const result = await window.electronAPI.billingWorkflow.execute(data);
+      setLastResult(result);
+      console.log('Billing workflow result:', result);
+      
+      if (result.success) {
+        // Close form on success
+        setShowBillingForm(false);
+      }
+    } catch (error) {
+      console.error('Failed to execute billing workflow:', error);
+      setLastResult({
+        success: false,
+        message: `Failed to execute billing workflow: ${error}`
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleBillingCancel = () => {
     setShowBillingForm(false);
+    setLastResult(null);
   };
 
   return (
@@ -98,12 +113,30 @@ const App: React.FC = () => {
         }}>
           🚛 Ready to process transportation billing
         </div>
+
+        {/* Display last result */}
+        {lastResult && (
+          <div style={{
+            marginTop: '20px',
+            padding: '15px',
+            backgroundColor: lastResult.success ? '#d4edda' : '#f8d7da',
+            borderRadius: '8px',
+            fontSize: '0.9rem',
+            border: `1px solid ${lastResult.success ? '#c3e6cb' : '#f5c6cb'}`,
+            color: lastResult.success ? '#155724' : '#721c24',
+          }}>
+            <strong>{lastResult.success ? '✅ Success:' : '❌ Error:'}</strong>
+            <br />
+            {lastResult.message}
+          </div>
+        )}
       </div>
 
       {showBillingForm && (
         <BillingWorkflowModule
           onSubmit={handleBillingSubmit}
           onCancel={handleBillingCancel}
+          isProcessing={isProcessing}
         />
       )}
     </>

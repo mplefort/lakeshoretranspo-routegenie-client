@@ -1,20 +1,14 @@
 import React, { useState } from 'react';
-
-interface BillingWorkflowData {
-  billingFrequency: 'All' | 'Daily' | 'Weekly' | 'Monthly';
-  startDate: string;
-  endDate: string;
-  outputFolder: string;
-  invoiceNumber: number;
-}
+import { BillingWorkflowFormInputs } from '../../types/electron';
 
 interface BillingWorkflowModuleProps {
-  onSubmit: (data: BillingWorkflowData) => void;
+  onSubmit: (data: BillingWorkflowFormInputs) => void;
   onCancel: () => void;
+  isProcessing?: boolean;
 }
 
-const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState<BillingWorkflowData>({
+const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit, onCancel, isProcessing = false }) => {
+  const [formData, setFormData] = useState<BillingWorkflowFormInputs>({
     billingFrequency: 'All',
     startDate: '',
     endDate: '',
@@ -22,16 +16,31 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
     invoiceNumber: 1000,
   });
 
-  const handleInputChange = (field: keyof BillingWorkflowData, value: string | number) => {
+  const handleInputChange = (field: keyof BillingWorkflowFormInputs, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
+  // Convert HTML date format (YYYY-MM-DD) to MM/DD/YYYY format expected by workflow
+  const convertDateFormat = (htmlDate: string): string => {
+    if (!htmlDate) return '';
+    const [year, month, day] = htmlDate.split('-');
+    return `${month}/${day}/${year}`;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // Convert dates to expected format before submitting
+    const submissionData: BillingWorkflowFormInputs = {
+      ...formData,
+      startDate: convertDateFormat(formData.startDate),
+      endDate: convertDateFormat(formData.endDate)
+    };
+    
+    onSubmit(submissionData);
   };
 
   return (
@@ -223,6 +232,7 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
             <button
               type="button"
               onClick={onCancel}
+              disabled={isProcessing}
               style={{
                 padding: '12px 24px',
                 borderRadius: '8px',
@@ -230,40 +240,51 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
                 backgroundColor: 'var(--primary-white)',
                 color: 'var(--primary-blue)',
                 fontSize: '1rem',
-                cursor: 'pointer',
+                cursor: isProcessing ? 'not-allowed' : 'pointer',
                 fontWeight: 'bold',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                opacity: isProcessing ? 0.6 : 1
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--light-blue)';
+                if (!isProcessing) {
+                  e.currentTarget.style.backgroundColor = 'var(--light-blue)';
+                }
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--primary-white)';
+                if (!isProcessing) {
+                  e.currentTarget.style.backgroundColor = 'var(--primary-white)';
+                }
               }}
             >
               Cancel
             </button>
             <button
               type="submit"
+              disabled={isProcessing}
               style={{
                 padding: '12px 24px',
                 borderRadius: '8px',
                 border: 'none',
-                backgroundColor: 'var(--primary-blue)',
+                backgroundColor: isProcessing ? 'var(--medium-blue)' : 'var(--primary-blue)',
                 color: 'var(--primary-white)',
                 fontSize: '1rem',
-                cursor: 'pointer',
+                cursor: isProcessing ? 'not-allowed' : 'pointer',
                 fontWeight: 'bold',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                opacity: isProcessing ? 0.8 : 1
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--accent-teal)';
+                if (!isProcessing) {
+                  e.currentTarget.style.backgroundColor = 'var(--accent-teal)';
+                }
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--primary-blue)';
+                if (!isProcessing) {
+                  e.currentTarget.style.backgroundColor = 'var(--primary-blue)';
+                }
               }}
             >
-              Start
+              {isProcessing ? 'Processing...' : 'Start'}
             </button>
           </div>
         </form>
