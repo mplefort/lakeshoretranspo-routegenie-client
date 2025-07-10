@@ -1,12 +1,42 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import os from 'os';
+import fs from 'fs';
 import { Logger } from '../utils/logger';
-import { normalizeAddress, normalizeName, createCacheKey } from '../utils/addressNormalizer';
+import { normalizeAddress, normalizeName } from '../utils/addressNormalizer';
 import { getShortestDistance } from '../adapters/googleMaps';
-import { resolveFromExecutable } from '../utils/paths';
 
 // Constants
 const COMPANY_ADDRESS = "N5806 Co Rd M, Plymouth, WI 53073, USA";
+
+/**
+ * Get the user data directory path for storing persistent data
+ */
+function getUserDataPath(): string {
+  try {
+    // Try to get Electron's user data path
+    const { app } = require('electron');
+    if (app && app.getPath) {
+      return app.getPath('userData');
+    }
+  } catch (error) {
+    // Electron not available, fallback to OS-specific user data directories
+  }
+
+  // Fallback to OS-specific user data directories
+  const appName = 'lakeshore-invoicer';
+  
+  switch (process.platform) {
+    case 'win32':
+      return path.join(os.homedir(), 'AppData', 'Roaming', appName);
+    case 'darwin':
+      return path.join(os.homedir(), 'Library', 'Application Support', appName);
+    case 'linux':
+      return path.join(os.homedir(), '.config', appName);
+    default:
+      return path.join(os.homedir(), `.${appName}`);
+  }
+}
 
 // Interfaces
 export interface MileageCacheEntry {
@@ -35,10 +65,13 @@ export interface CacheQueryParams {
 export class MileageCache {
   private db: Database.Database | null = null;
   private dbPath: string;
-  private isInitialized: boolean = false;
+  private isInitialized = false;
 
   constructor() {
-    this.dbPath = resolveFromExecutable('data', 'mileage_cache.db');
+    // Use user data directory for persistent storage across app updates
+    const userDataPath = getUserDataPath();
+    const dataDir = path.join(userDataPath, 'data');
+    this.dbPath = path.join(dataDir, 'mileage_cache.db');
   }
 
   /**
@@ -50,8 +83,9 @@ export class MileageCache {
     try {
       // Ensure data directory exists
       const dataDir = path.dirname(this.dbPath);
-      if (!require('fs').existsSync(dataDir)) {
-        require('fs').mkdirSync(dataDir, { recursive: true });
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+        Logger.info(`Created data directory: ${dataDir}`);
       }
 
       this.db = new Database(this.dbPath);

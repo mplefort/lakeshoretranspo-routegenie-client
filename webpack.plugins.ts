@@ -19,7 +19,7 @@ export const plugins = [
     AUTH_LINK: 'https://appcenter.intuit.com/connect/oauth2?client_id=ABL8qccvPdpBV59Sqv3pKeEvlCMbRbqYOw5V5bP7b4unXHfDoZ&redirect_uri=https://developer.intuit.com/v2/OAuth2Playground/RedirectUrl&response_type=code&scope=com.intuit.quickbooks.accounting&state=secureRandomState',
     QB_SB_CLIENT_ID: 'ABy8XnJ0uHgdIMVolVq0ppw4NpCSubgLGa1IRX34t2QjFd1Rw0',
     QB_SB_CLIENT_SECRET: 'Yqzisaf2Dal7H7Lc7UHfDTCLPL8W2z6p6rQv4s53',
-    NODE_ENV: 'produuction',
+    NODE_ENV: 'development',
     GOOGLE_MAPS_API_KEY: 'AIzaSyCJjLfrN7uBBlVb7FwvEQzN0hGqgQ3WCiM'
   }),
 ];
