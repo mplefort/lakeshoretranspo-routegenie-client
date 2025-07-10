@@ -1,157 +1,101 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import BillingWorkflowModule from './modules/BillingWorkflowModule';
 
-interface HelloResponse {
-  message: string;
-  timestamp: string;
-  source: string;
+interface BillingWorkflowData {
+  billingFrequency: 'All' | 'Daily' | 'Weekly' | 'Monthly';
+  startDate: string;
+  endDate: string;
+  outputFolder: string;
+  invoiceNumber: number;
 }
 
 const App: React.FC = () => {
-  const [helloData, setHelloData] = useState<HelloResponse | null>(null);
-  const [customName, setCustomName] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
+  const [showBillingForm, setShowBillingForm] = useState<boolean>(false);
 
-  // Load the initial hello message on component mount
-  useEffect(() => {
-    loadHelloMessage();
-  }, []);
-
-  const loadHelloMessage = async () => {
-    try {
-      setLoading(true);
-      const response = await window.electronAPI.hello.getMessage();
-      setHelloData(response);
-    } catch (error) {
-      console.error('Failed to load hello message:', error);
-      // Fallback message if IPC fails
-      setHelloData({
-        message: 'Hello World (Fallback)',
-        timestamp: new Date().toISOString(),
-        source: 'Renderer Process'
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleCreateBilling = () => {
+    setShowBillingForm(true);
   };
 
-  const loadCustomMessage = async () => {
-    if (!customName.trim()) return;
-    
-    try {
-      setLoading(true);
-      const response = await window.electronAPI.hello.getCustomMessage(customName);
-      setHelloData(response);
-    } catch (error) {
-      console.error('Failed to load custom message:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleBillingSubmit = (data: BillingWorkflowData) => {
+    console.log('Billing workflow data:', data);
+    // TODO: Implement billing workflow logic via IPC
+    setShowBillingForm(false);
   };
 
-  if (loading) {
-    return (
+  const handleBillingCancel = () => {
+    setShowBillingForm(false);
+  };
+
+  return (
+    <>
       <div style={{ 
         padding: '40px', 
         textAlign: 'center',
         fontFamily: 'Arial, sans-serif',
-        color: '#ffffff'
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        borderRadius: '15px',
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
+        maxWidth: '600px',
+        margin: '0 auto',
+        minHeight: '400px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center'
       }}>
-        <h2>Loading...</h2>
-      </div>
-    );
-  }
+        <h1 style={{ 
+          color: '#ffffff', 
+          fontSize: '3rem',
+          margin: '0 0 20px 0',
+          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)'
+        }}>
+          Lakeshore Invoicer
+        </h1>
+        
+        <p style={{
+          color: '#f0f0f0',
+          fontSize: '1.2rem',
+          marginBottom: '40px'
+        }}>
+          Transportation invoicing application
+        </p>
 
-  return (
-    <div style={{ 
-      padding: '40px', 
-      textAlign: 'center',
-      fontFamily: 'Arial, sans-serif',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      borderRadius: '15px',
-      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
-      maxWidth: '600px',
-      margin: '0 auto'
-    }}>
-      <h1 style={{ 
-        color: '#ffffff', 
-        fontSize: '3rem',
-        margin: '0 0 20px 0',
-        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)'
-      }}>
-        {helloData?.message || 'Hello World'}
-      </h1>
-      
-      <div style={{
-        marginBottom: '30px',
-        padding: '15px',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: '8px',
-        fontSize: '0.9rem',
-        color: '#f0f0f0'
-      }}>
-        <div><strong>Source:</strong> {helloData?.source}</div>
-        <div><strong>Timestamp:</strong> {helloData?.timestamp && new Date(helloData.timestamp).toLocaleString()}</div>
-      </div>
-
-      <div style={{ marginBottom: '20px' }}>
-        <input
-          type="text"
-          placeholder="Enter your name"
-          value={customName}
-          onChange={(e) => setCustomName(e.target.value)}
-          style={{
-            padding: '10px',
-            borderRadius: '5px',
-            border: 'none',
-            marginRight: '10px',
-            fontSize: '1rem',
-            minWidth: '200px'
-          }}
-        />
         <button
-          onClick={loadCustomMessage}
-          disabled={!customName.trim()}
+          onClick={handleCreateBilling}
           style={{
-            padding: '10px 20px',
-            borderRadius: '5px',
+            padding: '15px 30px',
+            borderRadius: '8px',
             border: 'none',
             backgroundColor: '#4CAF50',
             color: 'white',
-            fontSize: '1rem',
-            cursor: customName.trim() ? 'pointer' : 'not-allowed',
-            opacity: customName.trim() ? 1 : 0.6
+            fontSize: '1.2rem',
+            cursor: 'pointer',
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+            transition: 'transform 0.2s'
           }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
         >
-          Get Custom Message
+          Create Billing Invoice
         </button>
+
+        <div style={{
+          marginTop: '30px',
+          padding: '10px',
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          borderRadius: '8px',
+          fontSize: '0.9rem'
+        }}>
+          🚛 Ready to process transportation billing
+        </div>
       </div>
 
-      <button
-        onClick={loadHelloMessage}
-        style={{
-          padding: '10px 20px',
-          borderRadius: '5px',
-          border: 'none',
-          backgroundColor: '#2196F3',
-          color: 'white',
-          fontSize: '1rem',
-          cursor: 'pointer',
-          marginRight: '10px'
-        }}
-      >
-        Refresh Message
-      </button>
-
-      <div style={{
-        marginTop: '30px',
-        padding: '10px',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: '8px',
-        fontSize: '0.9rem'
-      }}>
-        🎉 IPC Communication Working!
-      </div>
-    </div>
+      {showBillingForm && (
+        <BillingWorkflowModule
+          onSubmit={handleBillingSubmit}
+          onCancel={handleBillingCancel}
+        />
+      )}
+    </>
   );
 };
 
