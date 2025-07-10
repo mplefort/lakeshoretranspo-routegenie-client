@@ -32,29 +32,31 @@ const App: React.FC = () => {
         padding: '40px', 
         textAlign: 'center',
         fontFamily: 'Arial, sans-serif',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'var(--dark-navy)',
         borderRadius: '15px',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
+        boxShadow: 'var(--shadow-primary)',
         maxWidth: '600px',
         margin: '0 auto',
         minHeight: '400px',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        border: `2px solid var(--primary-blue)`
       }}>
         <h1 style={{ 
-          color: '#ffffff', 
+          color: 'var(--primary-white)', 
           fontSize: '3rem',
           margin: '0 0 20px 0',
-          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)'
+          textShadow: `2px 2px 4px var(--dark-navy)`
         }}>
           Lakeshore Invoicer
         </h1>
         
         <p style={{
-          color: '#f0f0f0',
+          color: 'var(--primary-white)',
           fontSize: '1.2rem',
-          marginBottom: '40px'
+          marginBottom: '40px',
+          opacity: '0.9'
         }}>
           Transportation invoicing application
         </p>
@@ -64,26 +66,35 @@ const App: React.FC = () => {
           style={{
             padding: '15px 30px',
             borderRadius: '8px',
-            border: 'none',
-            backgroundColor: '#4CAF50',
-            color: 'white',
+            border: `2px solid var(--primary-blue)`,
+            backgroundColor: 'var(--primary-blue)',
+            color: 'var(--primary-white)',
             fontSize: '1.2rem',
             cursor: 'pointer',
-            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-            transition: 'transform 0.2s'
+            boxShadow: 'var(--shadow-light)',
+            transition: 'all 0.2s ease',
+            fontWeight: 'bold'
           }}
-          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.backgroundColor = 'var(--accent-teal)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.backgroundColor = 'var(--primary-blue)';
+          }}
         >
           Create Billing Invoice
         </button>
 
         <div style={{
           marginTop: '30px',
-          padding: '10px',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          padding: '15px',
+          backgroundColor: 'var(--primary-white)',
           borderRadius: '8px',
-          fontSize: '0.9rem'
+          fontSize: '0.9rem',
+          border: `1px solid var(--primary-blue)`,
+          color: 'var(--dark-navy)',
         }}>
           🚛 Ready to process transportation billing
         </div>

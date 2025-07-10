@@ -41,27 +41,29 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: 'rgba(3, 72, 110, 0.8)',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       zIndex: 1000
     }}>
       <div style={{
-        backgroundColor: 'white',
+        backgroundColor: 'var(--primary-white)',
         borderRadius: '15px',
         padding: '30px',
-        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+        boxShadow: 'var(--shadow-primary)',
         maxWidth: '500px',
         width: '90%',
         maxHeight: '80vh',
-        overflow: 'auto'
+        overflow: 'auto',
+        border: `3px solid var(--primary-blue)`
       }}>
         <h2 style={{
           margin: '0 0 20px 0',
-          color: '#333',
+          color: 'var(--dark-navy)',
           textAlign: 'center',
-          fontSize: '1.5rem'
+          fontSize: '1.8rem',
+          fontWeight: 'bold'
         }}>
           Create Billing Invoice
         </h2>
@@ -73,7 +75,7 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
               display: 'block',
               marginBottom: '8px',
               fontWeight: 'bold',
-              color: '#333'
+              color: 'var(--dark-navy)'
             }}>
               Billing Frequency:
             </label>
@@ -82,10 +84,13 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
               onChange={(e) => handleInputChange('billingFrequency', e.target.value as 'All' | 'Daily' | 'Weekly' | 'Monthly')}
               style={{
                 width: '100%',
-                padding: '10px',
-                borderRadius: '5px',
-                border: '1px solid #ddd',
-                fontSize: '1rem'
+                padding: '12px',
+                borderRadius: '8px',
+                border: `2px solid var(--primary-blue)`,
+                fontSize: '1rem',
+                backgroundColor: 'var(--primary-white)',
+                color: 'var(--dark-navy)',
+                outline: 'none'
               }}
             >
               <option value="All">All</option>
@@ -101,7 +106,7 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
               display: 'block',
               marginBottom: '8px',
               fontWeight: 'bold',
-              color: '#333'
+              color: 'var(--dark-navy)'
             }}>
               Start Date:
             </label>
@@ -111,10 +116,13 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
               onChange={(e) => handleInputChange('startDate', e.target.value)}
               style={{
                 width: '100%',
-                padding: '10px',
-                borderRadius: '5px',
-                border: '1px solid #ddd',
-                fontSize: '1rem'
+                padding: '12px',
+                borderRadius: '8px',
+                border: `2px solid var(--primary-blue)`,
+                fontSize: '1rem',
+                backgroundColor: 'var(--primary-white)',
+                color: 'var(--dark-navy)',
+                outline: 'none'
               }}
               required
             />
@@ -126,7 +134,7 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
               display: 'block',
               marginBottom: '8px',
               fontWeight: 'bold',
-              color: '#333'
+              color: 'var(--dark-navy)'
             }}>
               End Date:
             </label>
@@ -136,10 +144,13 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
               onChange={(e) => handleInputChange('endDate', e.target.value)}
               style={{
                 width: '100%',
-                padding: '10px',
-                borderRadius: '5px',
-                border: '1px solid #ddd',
-                fontSize: '1rem'
+                padding: '12px',
+                borderRadius: '8px',
+                border: `2px solid var(--primary-blue)`,
+                fontSize: '1rem',
+                backgroundColor: 'var(--primary-white)',
+                color: 'var(--dark-navy)',
+                outline: 'none'
               }}
               required
             />
@@ -151,7 +162,7 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
               display: 'block',
               marginBottom: '8px',
               fontWeight: 'bold',
-              color: '#333'
+              color: 'var(--dark-navy)'
             }}>
               Output Folder:
             </label>
@@ -161,10 +172,13 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
               onChange={(e) => handleInputChange('outputFolder', e.target.value)}
               style={{
                 width: '100%',
-                padding: '10px',
-                borderRadius: '5px',
-                border: '1px solid #ddd',
-                fontSize: '1rem'
+                padding: '12px',
+                borderRadius: '8px',
+                border: `2px solid var(--primary-blue)`,
+                fontSize: '1rem',
+                backgroundColor: 'var(--primary-white)',
+                color: 'var(--dark-navy)',
+                outline: 'none'
               }}
               placeholder="./reports/billing"
               required
@@ -177,7 +191,7 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
               display: 'block',
               marginBottom: '8px',
               fontWeight: 'bold',
-              color: '#333'
+              color: 'var(--dark-navy)'
             }}>
               Invoice Number:
             </label>
@@ -187,10 +201,13 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
               onChange={(e) => handleInputChange('invoiceNumber', parseInt(e.target.value) || 1000)}
               style={{
                 width: '100%',
-                padding: '10px',
-                borderRadius: '5px',
-                border: '1px solid #ddd',
-                fontSize: '1rem'
+                padding: '12px',
+                borderRadius: '8px',
+                border: `2px solid var(--primary-blue)`,
+                fontSize: '1rem',
+                backgroundColor: 'var(--primary-white)',
+                color: 'var(--dark-navy)',
+                outline: 'none'
               }}
               min="1"
               required
@@ -200,20 +217,28 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
           {/* Action Buttons */}
           <div style={{
             display: 'flex',
-            gap: '10px',
+            gap: '15px',
             justifyContent: 'flex-end'
           }}>
             <button
               type="button"
               onClick={onCancel}
               style={{
-                padding: '10px 20px',
-                borderRadius: '5px',
-                border: '1px solid #ddd',
-                backgroundColor: '#f5f5f5',
-                color: '#333',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                border: `2px solid var(--primary-blue)`,
+                backgroundColor: 'var(--primary-white)',
+                color: 'var(--primary-blue)',
                 fontSize: '1rem',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--light-blue)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--primary-white)';
               }}
             >
               Cancel
@@ -221,13 +246,21 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
             <button
               type="submit"
               style={{
-                padding: '10px 20px',
-                borderRadius: '5px',
+                padding: '12px 24px',
+                borderRadius: '8px',
                 border: 'none',
-                backgroundColor: '#4CAF50',
-                color: 'white',
+                backgroundColor: 'var(--primary-blue)',
+                color: 'var(--primary-white)',
                 fontSize: '1rem',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--accent-teal)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--primary-blue)';
               }}
             >
               Start
