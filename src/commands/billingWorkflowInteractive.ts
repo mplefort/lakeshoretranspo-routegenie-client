@@ -26,8 +26,11 @@ interface BillingWorkflowFormInputs {
 class BillingWorkflowInteractive {
   constructor() {
     // Initialize logger with default settings for UI usage
-    const logFile = resolveFromExecutable('logs', `billing-workflow-${this.getDateString()}.log`);
-    Logger.initialize(logFile, false); // No debug mode for UI
+    // This will use electron-log's default location:
+    // Windows: %USERPROFILE%\AppData\Roaming\lakeshore-invoicer\logs\main.log
+    // macOS: ~/Library/Logs/lakeshore-invoicer/main.log
+    // Linux: ~/.config/lakeshore-invoicer/logs/main.log
+    Logger.initialize(undefined, false); // No debug mode for UI, use default location
   }
 
   private getDateString(): string {
@@ -79,7 +82,7 @@ class BillingWorkflowInteractive {
       console.log(`Lakeshore Transportation Billing Workflow v${packageJson.version}`);
       Logger.info('Starting Lakeshore Transportation Billing Workflow from form inputs', true);
       
-      const logFile = resolveFromExecutable('logs', `billing-workflow-${this.getDateString()}.log`);
+      const logFile = Logger.getLogFilePath();
       Logger.info(`Log file: ${logFile}`, true);
 
       // Use form inputs

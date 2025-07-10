@@ -1,44 +1,56 @@
 import fs from 'fs';
 import path from 'path';
+import log from 'electron-log/main';
 
 class LoggerClass {
   private logFile: string;
-  private logStream?: fs.WriteStream;
   private debugMode: boolean;
+  private logger: typeof log;
 
   constructor() {
     this.logFile = '';
     this.debugMode = false;
+    this.logger = log;
+    
+    // Configure electron-log defaults
+    this.logger.transports.console.level = 'info';
+    this.logger.transports.file.level = 'info';
+    this.logger.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}';
   }
 
   initialize(logFile?: string, debugMode: boolean = false): void {
     this.debugMode = debugMode;
     
-    // Close existing stream if reinitializing
-    if (this.logStream) {
-      this.logStream.end();
-      this.logStream = undefined;
-    }
-
     if (logFile) {
       this.logFile = logFile;
+      
       // Ensure log directory exists
       const logDir = path.dirname(logFile);
       if (!fs.existsSync(logDir)) {
         fs.mkdirSync(logDir, { recursive: true });
       }
-      this.logStream = fs.createWriteStream(logFile, { flags: 'a' });
+      
+      // Configure electron-log file transport with custom path
+      this.logger.transports.file.resolvePathFn = () => logFile;
     } else {
       this.logFile = '';
+      // Use electron-log's default file location - don't set resolvePathFn at all
+      // Default locations:
+      // Linux: ~/.config/{app name}/logs/main.log
+      // macOS: ~/Library/Logs/{app name}/main.log  
+      // Windows: %USERPROFILE%\AppData\Roaming\{app name}\logs\main.log
+      
+      // Don't set resolvePathFn to use the default location
     }
-  }
 
-  private writeToLog(level: string, message: string, error?: any): void {
-    const timestamp = new Date().toISOString();
-    const logEntry = `[${timestamp}] ${level}: ${message}${error ? ` - ${error}` : ''}\n`;
-    
-    if (this.logStream) {
-      this.logStream.write(logEntry);
+    // Always ensure file logging is enabled
+    this.logger.transports.file.level = 'info';
+
+    // Configure console logging based on debug mode
+    if (debugMode) {
+      this.logger.transports.console.level = 'silly';
+    } else {
+      this.logger.transports.console.level = 'warn'; // Only show warnings and errors in console when not in debug mode
     }
   }
 
@@ -46,29 +58,43 @@ class LoggerClass {
     if (this.debugMode || forceConsole) {
       console.log('ℹ️', message);
     }
-    this.writeToLog('INFO', message);
+    this.logger.info(message);
   }
 
   success(message: string): void {
     console.log('✅', message);
-    this.writeToLog('SUCCESS', message);
+    this.logger.info(`SUCCESS: ${message}`);
   }
 
   warn(message: string): void {
     if (this.debugMode) {
       console.log('⚠️', message);
     }
-    this.writeToLog('WARN', message);
+    this.logger.warn(message);
   }
 
   error(message: string, error?: any): void {
     console.log('❌', message);
-    this.writeToLog('ERROR', message, error);
+    if (error) {
+      this.logger.error(`${message} - ${error}`);
+    } else {
+      this.logger.error(message);
+    }
   }
 
   progress(message: string): void {
     console.log('🔄', message);
-    this.writeToLog('PROGRESS', message);
+    this.logger.info(`PROGRESS: ${message}`);
+  }
+
+  getLogFilePath(): string {
+    // Get the current log file path from electron-log
+    try {
+      return this.logger.transports.file.getFile().path;
+    } catch (error) {
+      // Fallback if getFile() fails
+      return this.logFile || 'Default electron-log location';
+    }
   }
 
   setDebugMode(enabled: boolean): void {
@@ -76,9 +102,8 @@ class LoggerClass {
   }
 
   close(): void {
-    if (this.logStream) {
-      this.logStream.end();
-    }
+    // electron-log handles cleanup automatically
+    // No manual cleanup needed for file streams
   }
 }
 
