@@ -41,6 +41,58 @@ const App: React.FC = () => {
     setLastResult(null);
   };
 
+  // Function to detect and make folder paths clickable
+  const renderMessageWithClickablePaths = (message: string) => {
+    // Regex to match Windows-style paths (e.g., ./reports/billing, C:\Users\..., etc.)
+    const pathRegex = /([A-Za-z]:[\\\/][\w\s\\\/.-]+|\.[\w\s\\\/.-]*[\w\\\/])/g;
+    const parts = message.split(pathRegex);
+    
+    return parts.map((part, index) => {
+      if (pathRegex.test(part)) {
+        return (
+          <span
+            key={index}
+            onClick={() => handleOpenFolder(part)}
+            style={{
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              color: 'inherit',
+              fontWeight: 'bold'
+            }}
+            title="Click to open in File Explorer"
+          >
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
+  const handleOpenFolder = async (folderPath: string) => {
+    try {
+      await window.electronAPI.openFolder(folderPath);
+    } catch (error) {
+      console.error('Failed to open folder:', error);
+    }
+  };
+
+  const handleOpenLogFolder = async () => {
+    try {
+      await window.electronAPI.openLogFolder();
+    } catch (error) {
+      console.error('Failed to open log folder:', error);
+    }
+  };
+
+  const handleOpenMileageCacheFolder = async () => {
+    try {
+      await window.electronAPI.openMileageCacheFolder();
+    } catch (error) {
+      console.error('Failed to open mileage cache folder:', error);
+    }
+  };
+
   return (
     <>
       <div style={{ 
@@ -112,6 +164,33 @@ const App: React.FC = () => {
           color: 'var(--dark-navy)',
         }}>
           🚛 Ready to process transportation billing
+          <br />
+          <div style={{ marginTop: '8px', display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <span
+              onClick={handleOpenLogFolder}
+              style={{
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                color: 'var(--primary-blue)',
+                fontSize: '0.8rem'
+              }}
+              title="Click to open log folder"
+            >
+              📁 View Application Logs
+            </span>
+            <span
+              onClick={handleOpenMileageCacheFolder}
+              style={{
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                color: 'var(--primary-blue)',
+                fontSize: '0.8rem'
+              }}
+              title="Click to open mileage cache database folder"
+            >
+              �️ View Mileage Cache DB
+            </span>
+          </div>
         </div>
 
         {/* Display last result */}
@@ -127,7 +206,7 @@ const App: React.FC = () => {
           }}>
             <strong>{lastResult.success ? '✅ Success:' : '❌ Error:'}</strong>
             <br />
-            {lastResult.message}
+            {renderMessageWithClickablePaths(lastResult.message)}
           </div>
         )}
       </div>

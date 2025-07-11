@@ -287,12 +287,12 @@ export class MileageCache {
    */
   getCachedMileage(entry: MileageCacheEntry): number {
     if (entry.overwrite_miles !== undefined && entry.overwrite_miles !== null) {
-      return entry.overwrite_miles;
+      return Math.round(entry.overwrite_miles);
     }
     if (entry.Google_miles !== undefined && entry.Google_miles !== null) {
-      return entry.Google_miles;
+      return Math.round(entry.Google_miles);
     }
-    return entry.RG_miles;
+    return Math.round(entry.RG_miles);
   }
 
   /**
@@ -301,12 +301,12 @@ export class MileageCache {
    */
   getCachedDeadMileage(entry: MileageCacheEntry): number {
     if (entry.overwrite_dead_miles !== undefined && entry.overwrite_dead_miles !== null) {
-      return entry.overwrite_dead_miles;
+      return Math.round(entry.overwrite_dead_miles);
     }
     if (entry.Google_dead_miles !== undefined && entry.Google_dead_miles !== null) {
-      return entry.Google_dead_miles;
+      return Math.round(entry.Google_dead_miles);
     }
-    return entry.RG_dead_miles;
+    return Math.round(entry.RG_dead_miles);
   }
 
   /**

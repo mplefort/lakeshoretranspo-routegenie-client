@@ -7,6 +7,12 @@
 3. No show removes all other codes. This is done. Only inclusa charges a no show service code.
 4. Billing Freq Filter: Daily, Weekly, Monthly. Creates qb sync only for selected frequency and Blanks in billing freq
 
+
+## V1.0.6
+- Google cached mileage rounded to nearest mile on pull for loaded/unloaded miles.
+- show logs from View menu
+- show mileage cache db from View menu
+
 ## V1.0.5
 - Electron Forge for compiling
 - Auto updated add
