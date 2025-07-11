@@ -1,7 +1,7 @@
 {
-  "name": "lakeshore-invoicer",
-  "productName": "lakeshore-invoicer",
-  "version": "1.0.0",
+  "name": "lakeshoretranspo-routegenie-client",
+  "productName": "Lakeshore Invoicer",
+  "version": "1.0.5",
   "description": "Lakeshore Transportation invoicing application",
   "main": ".webpack/main",
   "scripts": {
@@ -9,6 +9,7 @@
     "package": "env-cmd electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
+    "release": "npm run make && npm run publish",
     "lint": "eslint --ext .ts,.tsx ."
   },
   "keywords": [],
@@ -27,6 +28,7 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
     "@electron-forge/plugin-fuses": "^7.8.1",
     "@electron-forge/plugin-webpack": "^7.8.1",
+    "@electron-forge/publisher-github": "^7.8.1",
     "@electron/fuses": "^1.8.0",
     "@types/better-sqlite3": "^7.6.8",
     "@types/node": "^24.0.1",
