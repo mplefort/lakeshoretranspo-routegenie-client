@@ -53,6 +53,7 @@ export interface IElectronAPI {
   // Utility operations
   showMessage: (message: string) => Promise<void>;
   openFolder: (folderPath: string) => Promise<void>;
+  openLogFolder: () => Promise<void>;
   
   // Settings
   getSettings: () => Promise<any>;

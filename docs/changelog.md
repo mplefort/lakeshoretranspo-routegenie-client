@@ -10,6 +10,7 @@
 
 ## V1.0.6
 - Google cached mileage rounded to nearest mile on pull for loaded/unloaded miles.
+- show logs from View menu
 
 ## V1.0.5
 - Electron Forge for compiling

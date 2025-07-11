@@ -77,6 +77,14 @@ const App: React.FC = () => {
     }
   };
 
+  const handleOpenLogFolder = async () => {
+    try {
+      await window.electronAPI.openLogFolder();
+    } catch (error) {
+      console.error('Failed to open log folder:', error);
+    }
+  };
+
   return (
     <>
       <div style={{ 
@@ -148,6 +156,21 @@ const App: React.FC = () => {
           color: 'var(--dark-navy)',
         }}>
           🚛 Ready to process transportation billing
+          <br />
+          <span
+            onClick={handleOpenLogFolder}
+            style={{
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              color: 'var(--primary-blue)',
+              fontSize: '0.8rem',
+              marginTop: '5px',
+              display: 'inline-block'
+            }}
+            title="Click to open log folder"
+          >
+            📁 View Application Logs
+          </span>
         </div>
 
         {/* Display last result */}
