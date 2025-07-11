@@ -8,10 +8,13 @@ interface BillingWorkflowModuleProps {
 }
 
 const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit, onCancel, isProcessing = false }) => {
+  // Get today's date in YYYY-MM-DD format for HTML date inputs
+  const today = new Date().toISOString().split('T')[0];
+  
   const [formData, setFormData] = useState<BillingWorkflowFormInputs>({
     billingFrequency: 'All',
-    startDate: '',
-    endDate: '',
+    startDate: today,
+    endDate: today,
     outputFolder: './reports/billing',
     invoiceNumber: 1000,
   });

@@ -41,6 +41,42 @@ const App: React.FC = () => {
     setLastResult(null);
   };
 
+  // Function to detect and make folder paths clickable
+  const renderMessageWithClickablePaths = (message: string) => {
+    // Regex to match Windows-style paths (e.g., ./reports/billing, C:\Users\..., etc.)
+    const pathRegex = /([A-Za-z]:[\\\/][\w\s\\\/.-]+|\.[\w\s\\\/.-]*[\w\\\/])/g;
+    const parts = message.split(pathRegex);
+    
+    return parts.map((part, index) => {
+      if (pathRegex.test(part)) {
+        return (
+          <span
+            key={index}
+            onClick={() => handleOpenFolder(part)}
+            style={{
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              color: 'inherit',
+              fontWeight: 'bold'
+            }}
+            title="Click to open in File Explorer"
+          >
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
+  const handleOpenFolder = async (folderPath: string) => {
+    try {
+      await window.electronAPI.openFolder(folderPath);
+    } catch (error) {
+      console.error('Failed to open folder:', error);
+    }
+  };
+
   return (
     <>
       <div style={{ 
@@ -127,7 +163,7 @@ const App: React.FC = () => {
           }}>
             <strong>{lastResult.success ? '✅ Success:' : '❌ Error:'}</strong>
             <br />
-            {lastResult.message}
+            {renderMessageWithClickablePaths(lastResult.message)}
           </div>
         )}
       </div>

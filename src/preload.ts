@@ -27,6 +27,7 @@ const electronAPI: IElectronAPI = {
   },
   buildQBSync: (data: any) => ipcRenderer.invoke('qb:buildSync', data),
   showMessage: (message: string) => ipcRenderer.invoke('dialog:showMessage', message),
+  openFolder: (folderPath: string) => ipcRenderer.invoke('shell:openFolder', folderPath),
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSettings: (settings: any) => ipcRenderer.invoke('settings:set', settings),
 };

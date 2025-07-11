@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { HelloService } from './services/hello';
 import { BillingWorkflowInteractive, BillingWorkflowFormInputs } from './commands/billingWorkflowInteractive';
 import { updateElectronApp } from 'update-electron-app';
@@ -97,6 +97,17 @@ const setupIpcHandlers = () => {
         message: `Workflow failed: ${error.message || error}`,
         outputDir: inputs.outputFolder
       };
+    }
+  });
+
+  // Shell operations handler
+  ipcMain.handle('shell:openFolder', async (event, folderPath: string) => {
+    console.log('Opening folder:', folderPath);
+    try {
+      await shell.openPath(folderPath);
+    } catch (error) {
+      console.error('Failed to open folder:', error);
+      throw error;
     }
   });
 };
