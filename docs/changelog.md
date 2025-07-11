@@ -7,6 +7,10 @@
 3. No show removes all other codes. This is done. Only inclusa charges a no show service code.
 4. Billing Freq Filter: Daily, Weekly, Monthly. Creates qb sync only for selected frequency and Blanks in billing freq
 
+## V1.0.5
+- Electron Forge for compiling
+- Auto updated add
+
 ## V1.0.4
 - Google maps API added to replace RG
 - data/mileage_cache.db to store cache of Google Maps routes. Schema below. Use DB Browser to edit overwrite fields as needed.
