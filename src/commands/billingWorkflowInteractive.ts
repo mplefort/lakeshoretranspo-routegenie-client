@@ -7,13 +7,9 @@ import { Logger } from '../utils/logger';
 import { resolveFromExecutable } from '../utils/paths';
 import { parse as csvParse } from 'fast-csv';
 import { config } from 'dotenv';
-import { readFileSync } from 'fs';
 
 // Load environment variables
 config();
-
-// Load package.json
-const packageJson = JSON.parse(readFileSync(resolveFromExecutable('package.json'), 'utf8'));
 
 interface BillingWorkflowFormInputs {
   startDate: string;
@@ -79,7 +75,6 @@ class BillingWorkflowInteractive {
    */
   async runFromFormInputs(inputs: BillingWorkflowFormInputs): Promise<{ success: boolean; message: string; outputDir: string }> {
     try {
-      console.log(`Lakeshore Transportation Billing Workflow v${packageJson.version}`);
       Logger.info('Starting Lakeshore Transportation Billing Workflow from form inputs', true);
       
       const logFile = Logger.getLogFilePath();

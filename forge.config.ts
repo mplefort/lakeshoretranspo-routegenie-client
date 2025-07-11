@@ -20,6 +20,11 @@ const config: ForgeConfig = {
      ignore: [
             /node_modules\/(?!(better-sqlite3|bindings|file-uri-to-path)\/)/,
       ],
+     extraResource: [
+       'package.json',
+       'mappings',
+       'reports'
+     ],
      icon: process.platform === 'darwin' ? 'src/img/LST_icon_mac' : 'src/img/LST_icon_win'
   },
   rebuildConfig: {},

@@ -1,14 +1,14 @@
 {
   "name": "lakeshoretranspo-routegenie-client",
   "productName": "Lakeshore Invoicer",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Lakeshore Transportation invoicing application",
   "main": ".webpack/main",
   "scripts": {
-    "start": "electron-forge start",
-    "package": "env-cmd electron-forge package",
-    "make": "env-cmd electron-forge make",
-    "publish": "env-cmd electron-forge publish",
+    "start": "env-cmd -e development electron-forge start ",
+    "package": "env-cmd -e production electron-forge package",
+    "make": "env-cmd -e production electron-forge make",
+    "publish": "env-cmd -e production electron-forge publish",
     "release": "npm run make && npm run publish",
     "lint": "eslint --ext .ts,.tsx ."
   },
@@ -16,6 +16,10 @@
   "author": {
     "name": "Matthew LeFort",
     "email": "matthewlefort@gmail.com"
+  },
+    "repository": {
+    "type": "git",
+    "url": "https://github.com/mplefort/lakeshoretranspo-routegenie-client.git"
   },
   "license": "MIT",
   "devDependencies": {

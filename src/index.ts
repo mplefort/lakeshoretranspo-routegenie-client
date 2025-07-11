@@ -15,12 +15,23 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+// log version, environment, and platform
+Logger.info(`Lakeshore Invoicer v${app.getVersion()}`);
+Logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+Logger.info(`Platform: ${process.platform} (${process.arch})`);
+
 if (!process.env.NODE_ENV || process.env.NODE_ENV === 'production') {
+  // log that updates are enabled
+  Logger.info('Update checks enabled');
   updateElectronApp({
     updateInterval: '1 hour', // Check for updates every hour
     logger: require('electron-log')
   });
+} else {
+  // In development mode, we don't want to check for updates
+  Logger.info('Update checks disabled in development mode');
 }
+
 
 // Create application menu
 const createApplicationMenu = (): void => {
@@ -172,8 +183,8 @@ const createApplicationMenu = (): void => {
             dialog.showMessageBox({
               type: 'info',
               title: 'About Lakeshore Invoicer',
-              message: 'Lakeshore Invoicer',
-              detail: 'Transportation invoicing application'
+              message: `Lakeshore Invoicer v${app.getVersion()}`,
+              detail: 'Transportation invoicing application',
             });
           }
         }
