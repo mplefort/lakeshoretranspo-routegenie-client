@@ -101,6 +101,44 @@ const createApplicationMenu = (): void => {
               console.error('Failed to open log folder:', error);
             }
           }
+        },
+        {
+          label: 'Mileage Cache DB',
+          click: async () => {
+            try {
+              // Get the mileage cache database path
+              const path = require('path');
+              const os = require('os');
+              
+              // Get user data path (same logic as in mileageCache.ts)
+              let userDataPath: string;
+              try {
+                userDataPath = app.getPath('userData');
+              } catch (error) {
+                // Fallback to OS-specific user data directories
+                const appName = 'lakeshore-invoicer';
+                switch (process.platform) {
+                  case 'win32':
+                    userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', appName);
+                    break;
+                  case 'darwin':
+                    userDataPath = path.join(os.homedir(), 'Library', 'Application Support', appName);
+                    break;
+                  case 'linux':
+                    userDataPath = path.join(os.homedir(), '.config', appName);
+                    break;
+                  default:
+                    userDataPath = path.join(os.homedir(), `.${appName}`);
+                }
+              }
+              
+              const dataDir = path.join(userDataPath, 'data');
+              // Open the data folder containing the mileage cache database
+              await shell.openPath(dataDir);
+            } catch (error) {
+              console.error('Failed to open mileage cache folder:', error);
+            }
+          }
         }
       ]
     },
@@ -256,6 +294,44 @@ const setupIpcHandlers = () => {
       await shell.openPath(logDir);
     } catch (error) {
       console.error('Failed to open log folder:', error);
+      throw error;
+    }
+  });
+
+  // Open mileage cache folder handler
+  ipcMain.handle('shell:openMileageCacheFolder', async () => {
+    console.log('Opening mileage cache folder');
+    try {
+      const path = require('path');
+      const os = require('os');
+      
+      // Get user data path (same logic as in mileageCache.ts)
+      let userDataPath: string;
+      try {
+        userDataPath = app.getPath('userData');
+      } catch (error) {
+        // Fallback to OS-specific user data directories
+        const appName = 'lakeshore-invoicer';
+        switch (process.platform) {
+          case 'win32':
+            userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', appName);
+            break;
+          case 'darwin':
+            userDataPath = path.join(os.homedir(), 'Library', 'Application Support', appName);
+            break;
+          case 'linux':
+            userDataPath = path.join(os.homedir(), '.config', appName);
+            break;
+          default:
+            userDataPath = path.join(os.homedir(), `.${appName}`);
+        }
+      }
+      
+      const dataDir = path.join(userDataPath, 'data');
+      // Open the data folder containing the mileage cache database
+      await shell.openPath(dataDir);
+    } catch (error) {
+      console.error('Failed to open mileage cache folder:', error);
       throw error;
     }
   });

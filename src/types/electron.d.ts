@@ -54,6 +54,7 @@ export interface IElectronAPI {
   showMessage: (message: string) => Promise<void>;
   openFolder: (folderPath: string) => Promise<void>;
   openLogFolder: () => Promise<void>;
+  openMileageCacheFolder: () => Promise<void>;
   
   // Settings
   getSettings: () => Promise<any>;

@@ -29,6 +29,7 @@ const electronAPI: IElectronAPI = {
   showMessage: (message: string) => ipcRenderer.invoke('dialog:showMessage', message),
   openFolder: (folderPath: string) => ipcRenderer.invoke('shell:openFolder', folderPath),
   openLogFolder: () => ipcRenderer.invoke('shell:openLogFolder'),
+  openMileageCacheFolder: () => ipcRenderer.invoke('shell:openMileageCacheFolder'),
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSettings: (settings: any) => ipcRenderer.invoke('settings:set', settings),
 };

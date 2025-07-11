@@ -85,6 +85,14 @@ const App: React.FC = () => {
     }
   };
 
+  const handleOpenMileageCacheFolder = async () => {
+    try {
+      await window.electronAPI.openMileageCacheFolder();
+    } catch (error) {
+      console.error('Failed to open mileage cache folder:', error);
+    }
+  };
+
   return (
     <>
       <div style={{ 
@@ -157,20 +165,32 @@ const App: React.FC = () => {
         }}>
           🚛 Ready to process transportation billing
           <br />
-          <span
-            onClick={handleOpenLogFolder}
-            style={{
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              color: 'var(--primary-blue)',
-              fontSize: '0.8rem',
-              marginTop: '5px',
-              display: 'inline-block'
-            }}
-            title="Click to open log folder"
-          >
-            📁 View Application Logs
-          </span>
+          <div style={{ marginTop: '8px', display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <span
+              onClick={handleOpenLogFolder}
+              style={{
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                color: 'var(--primary-blue)',
+                fontSize: '0.8rem'
+              }}
+              title="Click to open log folder"
+            >
+              📁 View Application Logs
+            </span>
+            <span
+              onClick={handleOpenMileageCacheFolder}
+              style={{
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                color: 'var(--primary-blue)',
+                fontSize: '0.8rem'
+              }}
+              title="Click to open mileage cache database folder"
+            >
+              �️ View Mileage Cache DB
+            </span>
+          </div>
         </div>
 
         {/* Display last result */}
