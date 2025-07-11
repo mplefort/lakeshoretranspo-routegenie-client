@@ -3,6 +3,7 @@ import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerZIP } from '@electron-forge/maker-zip';
 import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerRpm } from '@electron-forge/maker-rpm';
+import { MakerDMG } from '@electron-forge/maker-dmg';
 import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-natives';
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
@@ -17,9 +18,24 @@ const config: ForgeConfig = {
      ignore: [
             /node_modules\/(?!(better-sqlite3|bindings|file-uri-to-path)\/)/,
       ],
+     icon: process.platform === 'darwin' ? 'src/img/LST_icon_mac' : 'src/img/LST_icon_win'
   },
   rebuildConfig: {},
-  makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerRpm({}), new MakerDeb({})],
+  makers: [
+    new MakerSquirrel({
+      setupIcon: 'src/img/LST_icon_win.ico'
+    }), 
+    new MakerZIP({}, ['darwin']), 
+    new MakerDMG({
+      icon: 'src/img/LST_icon_mac.icns'
+    }, ['darwin']),
+    new MakerRpm({}), 
+    new MakerDeb({
+      options: {
+        icon: 'src/img/LST_icon_win.ico'
+      }
+    })
+  ],
   plugins: [
     new AutoUnpackNativesPlugin({}),
     new WebpackPlugin({

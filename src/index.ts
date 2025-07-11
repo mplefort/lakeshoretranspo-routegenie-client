@@ -20,6 +20,9 @@ const createWindow = (): void => {
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
+    icon: process.platform === 'win32' ? 'src/img/LST_icon_win.ico' : 
+          process.platform === 'darwin' ? 'src/img/LST_icon_mac.icns' : 
+          'src/img/LST_icon_win.ico', // fallback for Linux
   });
 
   // and load the index.html of the app.

@@ -33,7 +33,6 @@ class LoggerClass {
       // Configure electron-log file transport with custom path
       this.logger.transports.file.resolvePathFn = () => logFile;
     } else {
-      this.logFile = '';
       // Use electron-log's default file location - don't set resolvePathFn at all
       // Default locations:
       // Linux: ~/.config/{app name}/logs/main.log
@@ -41,6 +40,7 @@ class LoggerClass {
       // Windows: %USERPROFILE%\AppData\Roaming\{app name}\logs\main.log
       
       // Don't set resolvePathFn to use the default location
+      this.logFile = '';
     }
 
     // Always ensure file logging is enabled
