@@ -17,18 +17,21 @@ export function getExecutableDir(): string {
     return process.cwd();
   }
   
-  // In development with ts-node, use the project root
+  // In development with Electron, try to use app.getAppPath() if available
   if (process.env.NODE_ENV !== 'production') {
-    // For development, find the project root by looking for package.json
-    let currentDir = __dirname;
-    while (currentDir !== path.dirname(currentDir)) {
-      try {
-        require.resolve(path.join(currentDir, 'package.json'));
-        return currentDir;
-      } catch {
-        currentDir = path.dirname(currentDir);
+    try {
+      // Try to import Electron app module (only available in main process)
+      const { app } = require('electron');
+      if (app && app.getAppPath) {
+        return app.getAppPath();
       }
+    } catch {
+      // Electron not available or we're in renderer process, fallback to other methods
     }
+    
+    // For development with webpack, use the current working directory
+    // since webpack bundles everything into .webpack directory
+    return process.cwd();
   }
   
   // Fallback to current working directory

@@ -1,12 +1,42 @@
-import * as sqlite3 from 'sqlite3';
+import Database from 'better-sqlite3';
 import path from 'path';
+import os from 'os';
+import fs from 'fs';
 import { Logger } from '../utils/logger';
-import { normalizeAddress, normalizeName, createCacheKey } from '../utils/addressNormalizer';
+import { normalizeAddress, normalizeName } from '../utils/addressNormalizer';
 import { getShortestDistance } from '../adapters/googleMaps';
-import { resolveFromExecutable } from '../utils/paths';
 
 // Constants
 const COMPANY_ADDRESS = "N5806 Co Rd M, Plymouth, WI 53073, USA";
+
+/**
+ * Get the user data directory path for storing persistent data
+ */
+function getUserDataPath(): string {
+  try {
+    // Try to get Electron's user data path
+    const { app } = require('electron');
+    if (app && app.getPath) {
+      return app.getPath('userData');
+    }
+  } catch (error) {
+    // Electron not available, fallback to OS-specific user data directories
+  }
+
+  // Fallback to OS-specific user data directories
+  const appName = 'lakeshore-invoicer';
+  
+  switch (process.platform) {
+    case 'win32':
+      return path.join(os.homedir(), 'AppData', 'Roaming', appName);
+    case 'darwin':
+      return path.join(os.homedir(), 'Library', 'Application Support', appName);
+    case 'linux':
+      return path.join(os.homedir(), '.config', appName);
+    default:
+      return path.join(os.homedir(), `.${appName}`);
+  }
+}
 
 // Interfaces
 export interface MileageCacheEntry {
@@ -33,12 +63,15 @@ export interface CacheQueryParams {
 }
 
 export class MileageCache {
-  private db: sqlite3.Database | null = null;
+  private db: Database.Database | null = null;
   private dbPath: string;
-  private isInitialized: boolean = false;
+  private isInitialized = false;
 
   constructor() {
-    this.dbPath = resolveFromExecutable('data', 'mileage_cache.db');
+    // Use user data directory for persistent storage across app updates
+    const userDataPath = getUserDataPath();
+    const dataDir = path.join(userDataPath, 'data');
+    this.dbPath = path.join(dataDir, 'mileage_cache.db');
   }
 
   /**
@@ -47,79 +80,58 @@ export class MileageCache {
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
-    return new Promise((resolve, reject) => {
+    try {
       // Ensure data directory exists
       const dataDir = path.dirname(this.dbPath);
-      if (!require('fs').existsSync(dataDir)) {
-        require('fs').mkdirSync(dataDir, { recursive: true });
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+        Logger.info(`Created data directory: ${dataDir}`);
       }
 
-      this.db = new sqlite3.Database(this.dbPath, (err: Error | null) => {
-        if (err) {
-          Logger.error('Failed to connect to mileage cache database:', err);
-          reject(err);
-          return;
-        }
-
-        Logger.info(`Connected to mileage cache database at ${this.dbPath}`);
-        this.createTables()
-          .then(() => {
-            this.isInitialized = true;
-            resolve();
-          })
-          .catch(reject);
-      });
-    });
+      this.db = new Database(this.dbPath);
+      Logger.info(`Connected to mileage cache database at ${this.dbPath}`);
+      
+      this.createTables();
+      this.isInitialized = true;
+    } catch (err) {
+      Logger.error('Failed to connect to mileage cache database:', err);
+      throw err;
+    }
   }
 
   /**
    * Create the mileage_cache table if it doesn't exist
    */
-  private createTables(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const createTableSQL = `
-        CREATE TABLE IF NOT EXISTS mileage_cache (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          passenger_last_name TEXT NOT NULL,
-          passenger_first_name TEXT NOT NULL,
-          PU_address TEXT NOT NULL,
-          DO_address TEXT NOT NULL,
-          RG_miles REAL NOT NULL,
-          Google_miles REAL NOT NULL,
-          overwrite_miles REAL,
-          RG_dead_miles REAL NOT NULL,
-          Google_dead_miles REAL NOT NULL,
-          overwrite_dead_miles REAL,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-      `;
+  private createTables(): void {
+    const createTableSQL = `
+      CREATE TABLE IF NOT EXISTS mileage_cache (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        passenger_last_name TEXT NOT NULL,
+        passenger_first_name TEXT NOT NULL,
+        PU_address TEXT NOT NULL,
+        DO_address TEXT NOT NULL,
+        RG_miles REAL NOT NULL,
+        Google_miles REAL NOT NULL,
+        overwrite_miles REAL,
+        RG_dead_miles REAL NOT NULL,
+        Google_dead_miles REAL NOT NULL,
+        overwrite_dead_miles REAL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
 
-      this.db!.run(createTableSQL, (err: Error | null) => {
-        if (err) {
-          Logger.error('Failed to create mileage_cache table:', err);
-          reject(err);
-          return;
-        }
+    this.db!.exec(createTableSQL);
 
-        // Create index for faster lookups
-        const createIndexSQL = `
-          CREATE INDEX IF NOT EXISTS idx_mileage_cache_lookup 
-          ON mileage_cache(passenger_last_name, passenger_first_name, PU_address, DO_address)
-        `;
+    // Create index for faster lookups
+    const createIndexSQL = `
+      CREATE INDEX IF NOT EXISTS idx_mileage_cache_lookup 
+      ON mileage_cache(passenger_last_name, passenger_first_name, PU_address, DO_address)
+    `;
 
-        this.db!.run(createIndexSQL, (indexErr: Error | null) => {
-          if (indexErr) {
-            Logger.error('Failed to create index on mileage_cache table:', indexErr);
-            reject(indexErr);
-            return;
-          }
+    this.db!.exec(createIndexSQL);
 
-          Logger.info('Mileage cache database tables created successfully');
-          resolve();
-        });
-      });
-    });
+    Logger.info('Mileage cache database tables created successfully');
   }
 
   /**
@@ -135,7 +147,7 @@ export class MileageCache {
     const normalizedPU = normalizeAddress(params.puAddress);
     const normalizedDO = normalizeAddress(params.doAddress);
 
-    return new Promise((resolve, reject) => {
+    try {
       const sql = `
         SELECT * FROM mileage_cache 
         WHERE passenger_last_name = ? 
@@ -144,16 +156,14 @@ export class MileageCache {
         AND DO_address = ?
       `;
 
-      this.db!.get(sql, [normalizedLast, normalizedFirst, normalizedPU, normalizedDO], (err: Error | null, row: any) => {
-        if (err) {
-          Logger.error('Error querying mileage cache:', err);
-          reject(err);
-          return;
-        }
-
-        resolve(row as MileageCacheEntry || null);
-      });
-    });
+      const stmt = this.db!.prepare(sql);
+      const row = stmt.get(normalizedLast, normalizedFirst, normalizedPU, normalizedDO) as MileageCacheEntry | undefined;
+      
+      return row || null;
+    } catch (err) {
+      Logger.error('Error querying mileage cache:', err);
+      throw err;
+    }
   }
 
   /**
@@ -191,34 +201,23 @@ export class MileageCache {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
-      return new Promise((resolve, reject) => {
-        this.db!.run(
-          sql,
-          [normalizedLast, normalizedFirst, normalizedPU, normalizedDO, rgMiles, googleMiles, rgDeadMiles, googleDeadMiles],
-          function(this: sqlite3.RunResult, err: Error | null) {
-            if (err) {
-              Logger.error('Error inserting into mileage cache:', err);
-              reject(err);
-              return;
-            }
+      const stmt = this.db!.prepare(sql);
+      const result = stmt.run(normalizedLast, normalizedFirst, normalizedPU, normalizedDO, rgMiles, googleMiles, rgDeadMiles, googleDeadMiles);
 
-            const entry: MileageCacheEntry = {
-              id: this.lastID,
-              passenger_last_name: normalizedLast,
-              passenger_first_name: normalizedFirst,
-              PU_address: normalizedPU,
-              DO_address: normalizedDO,
-              RG_miles: rgMiles,
-              Google_miles: googleMiles,
-              RG_dead_miles: rgDeadMiles,
-              Google_dead_miles: googleDeadMiles
-            };
+      const entry: MileageCacheEntry = {
+        id: result.lastInsertRowid as number,
+        passenger_last_name: normalizedLast,
+        passenger_first_name: normalizedFirst,
+        PU_address: normalizedPU,
+        DO_address: normalizedDO,
+        RG_miles: rgMiles,
+        Google_miles: googleMiles,
+        RG_dead_miles: rgDeadMiles,
+        Google_dead_miles: googleDeadMiles
+      };
 
-            Logger.success(`Created cache entry for ${normalizedFirst} ${normalizedLast}: ${googleMiles} miles, ${googleDeadMiles} dead miles`);
-            resolve(entry);
-          }
-        );
-      });
+      Logger.success(`Created cache entry for ${normalizedFirst} ${normalizedLast}: ${googleMiles} miles, ${googleDeadMiles} dead miles`);
+      return entry;
 
     } catch (error) {
       Logger.error('Error fetching Google Maps distances:', error);
@@ -232,33 +231,22 @@ export class MileageCache {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
-      return new Promise((resolve, reject) => {
-        this.db!.run(
-          sql,
-          [normalizedLast, normalizedFirst, normalizedPU, normalizedDO, rgMiles, rgMiles, rgDeadMiles, rgDeadMiles],
-          function(this: sqlite3.RunResult, err: Error | null) {
-            if (err) {
-              Logger.error('Error inserting fallback cache entry:', err);
-              reject(err);
-              return;
-            }
+      const stmt = this.db!.prepare(sql);
+      const result = stmt.run(normalizedLast, normalizedFirst, normalizedPU, normalizedDO, rgMiles, rgMiles, rgDeadMiles, rgDeadMiles);
 
-            const entry: MileageCacheEntry = {
-              id: this.lastID,
-              passenger_last_name: normalizedLast,
-              passenger_first_name: normalizedFirst,
-              PU_address: normalizedPU,
-              DO_address: normalizedDO,
-              RG_miles: rgMiles,
-              Google_miles: rgMiles,
-              RG_dead_miles: rgDeadMiles,
-              Google_dead_miles: rgDeadMiles
-            };
+      const entry: MileageCacheEntry = {
+        id: result.lastInsertRowid as number,
+        passenger_last_name: normalizedLast,
+        passenger_first_name: normalizedFirst,
+        PU_address: normalizedPU,
+        DO_address: normalizedDO,
+        RG_miles: rgMiles,
+        Google_miles: rgMiles,
+        RG_dead_miles: rgDeadMiles,
+        Google_dead_miles: rgDeadMiles
+      };
 
-            resolve(entry);
-          }
-        );
-      });
+      return entry;
     }
   }
 
@@ -283,18 +271,14 @@ export class MileageCache {
 
     const sql = `UPDATE mileage_cache SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
 
-    return new Promise((resolve, reject) => {
-      this.db!.run(sql, [...values, id], (err: Error | null) => {
-        if (err) {
-          Logger.error('Error updating mileage cache:', err);
-          reject(err);
-          return;
-        }
-
-        Logger.info(`Updated cache entry ${id}`);
-        resolve();
-      });
-    });
+    try {
+      const stmt = this.db!.prepare(sql);
+      stmt.run(...values, id);
+      Logger.info(`Updated cache entry ${id}`);
+    } catch (err) {
+      Logger.error('Error updating mileage cache:', err);
+      throw err;
+    }
   }
 
   /**
@@ -330,22 +314,38 @@ export class MileageCache {
    */
   async close(): Promise<void> {
     if (this.db) {
-      return new Promise((resolve, reject) => {
-        this.db!.close((err: Error | null) => {
-          if (err) {
-            Logger.error('Error closing mileage cache database:', err);
-            reject(err);
-            return;
-          }
-
-          Logger.info('Mileage cache database connection closed');
-          this.isInitialized = false;
-          resolve();
-        });
-      });
+      try {
+        this.db.close();
+        this.isInitialized = false;
+        Logger.info('Mileage cache database connection closed');
+      } catch (err) {
+        Logger.error('Error closing mileage cache database:', err);
+        throw err;
+      }
     }
   }
 }
 
-// Export singleton instance
-export const mileageCache = new MileageCache();
+// Export singleton instance - lazy loaded
+let _mileageCache: MileageCache | null = null;
+
+export function getMileageCache(): MileageCache {
+  if (!_mileageCache) {
+    _mileageCache = new MileageCache();
+  }
+  return _mileageCache;
+}
+
+// For backward compatibility
+export const mileageCache = {
+  get instance() {
+    return getMileageCache();
+  },
+  initialize: () => getMileageCache().initialize(),
+  close: () => getMileageCache().close(),
+  findCacheEntry: (params: CacheQueryParams) => getMileageCache().findCacheEntry(params),
+  createCacheEntry: (params: CacheQueryParams, rgMiles: number, rgDeadMiles: number) => 
+    getMileageCache().createCacheEntry(params, rgMiles, rgDeadMiles),
+  getCachedMileage: (entry: MileageCacheEntry) => getMileageCache().getCachedMileage(entry),
+  getCachedDeadMileage: (entry: MileageCacheEntry) => getMileageCache().getCachedDeadMileage(entry),
+};

@@ -1,7 +1,5 @@
-#!/usr/bin/env node
 import path from 'path';
 import fs from 'fs';
-import * as readline from 'readline';
 import { generateBillingReport } from '../adapters/routeGenie';
 import { buildInvoices, flattenAggregatedResults, parseCsvRows, aggregateRows } from '../services/invoiceBuilder';
 import { loadQBServiceCodes, buildQBSyncFile } from '../services/qbSync';
@@ -9,41 +7,30 @@ import { Logger } from '../utils/logger';
 import { resolveFromExecutable } from '../utils/paths';
 import { parse as csvParse } from 'fast-csv';
 import { config } from 'dotenv';
-import packageJson from '../../package.json';
+import { readFileSync } from 'fs';
 
 // Load environment variables
 config();
 
-interface WorkflowOptions {
-  startDate?: string;
-  endDate?: string;
-  invoiceNumber?: string;
-  outputDir?: string;
-  logFile?: string;
-  help?: boolean;
-  interactive?: boolean;
-  debug?: boolean;
-  billingFrequencyFilter?: string;
+// Load package.json
+const packageJson = JSON.parse(readFileSync(resolveFromExecutable('package.json'), 'utf8'));
+
+interface BillingWorkflowFormInputs {
+  startDate: string;
+  endDate: string;
+  billingFrequency: 'All' | 'Daily' | 'Weekly' | 'Monthly';
+  invoiceNumber: number;
+  outputFolder: string;
 }
 
 class BillingWorkflowInteractive {
-  private options: WorkflowOptions;
-  private rl: readline.Interface;
-
-  constructor(options: WorkflowOptions) {
-    this.options = options;
-    const logFile = options.logFile || resolveFromExecutable('logs', `billing-workflow-${this.getDateString()}.log`);
-    const debugMode = options.debug || false;
-    if(debugMode) {
-      console.log('Debug mode enabled. Verbose logging to console.');
-    }
-    
-    // Initialize the global logger
-    Logger.initialize(logFile, debugMode);
-    this.rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
+  constructor() {
+    // Initialize logger with default settings for UI usage
+    // This will use electron-log's default location:
+    // Windows: %USERPROFILE%\AppData\Roaming\lakeshore-invoicer\logs\main.log
+    // macOS: ~/Library/Logs/lakeshore-invoicer/main.log
+    // Linux: ~/.config/lakeshore-invoicer/logs/main.log
+    Logger.initialize(undefined, false); // No debug mode for UI, use default location
   }
 
   private getDateString(): string {
@@ -67,164 +54,6 @@ class BillingWorkflowInteractive {
     return date.getMonth() === month - 1 && date.getDate() === day && date.getFullYear() === year;
   }
 
-  private question(prompt: string): Promise<string> {
-    return new Promise((resolve) => {
-      this.rl.question(prompt, (answer) => {
-        resolve(answer.trim());
-      });
-    });
-  }
-
-  private parseArgs(): WorkflowOptions {
-    const args = process.argv.slice(2);
-    const options: WorkflowOptions = {};
-
-    for (let i = 0; i < args.length; i++) {
-      const arg = args[i];
-      switch (arg) {
-        case '-s':
-        case '--start-date':
-          options.startDate = args[++i];
-          break;
-        case '-e':
-        case '--end-date':
-          options.endDate = args[++i];
-          break;
-        case '-n':
-        case '--invoice-number':
-          options.invoiceNumber = args[++i];
-          break;
-        case '-o':
-        case '--output-dir':
-          options.outputDir = args[++i];
-          break;
-        case '-l':
-        case '--log-file':
-          options.logFile = args[++i];
-          break;
-        case '-i':
-        case '--interactive':
-          options.interactive = true;
-          break;
-        case '-d':
-        case '--debug':
-          options.debug = true;
-          break;
-        case '-h':
-        case '--help':
-          options.help = true;
-          break;
-      }
-    }
-
-    return { ...this.options, ...options };
-  }
-
-  private showHelp(): void {
-    console.log(`
-Lakeshore Transportation Billing Workflow v${packageJson.version}
-
-USAGE:
-  billing-workflow [OPTIONS]
-
-OPTIONS:
-  -s, --start-date <date>      Start date (MM/DD/YYYY)
-  -e, --end-date <date>        End date (MM/DD/YYYY)  
-  -n, --invoice-number <num>   Starting invoice number (default: 1000)
-  -o, --output-dir <path>      Output directory (default: ./reports/billing)
-  -l, --log-file <path>        Log file path
-  -i, --interactive            Interactive mode - prompt for missing inputs
-  -d, --debug                  Enable debug mode (verbose console logging)
-  -h, --help                   Show this help message
-
-EXAMPLES:
-  billing-workflow                                    # Use today's date for both start and end
-  billing-workflow -s 06/01/2025 -e 06/19/2025      # Specify date range
-  billing-workflow -s 06/01/2025 -e 06/19/2025 -n 2000 -o ./output
-  billing-workflow --interactive                     # Force interactive mode
-  billing-workflow --debug                           # Enable verbose console logging
-  
-NOTES:
-  • Dates must be in MM/DD/YYYY format
-  • If dates are not provided, today's date will be used
-  • Output directory defaults to ./reports/billing
-  • Logs are saved to ./logs/billing-workflow-YYYY-MM-DD.log
-`);
-  }
-
-  private async getInputsInteractively(): Promise<{ startDate: string; endDate: string; invoiceNumber: number; outputDir: string; billingFrequencyFilter: string }> {
-    const today = new Date();
-    const defaultDate = this.formatDateToMDY(today);
-    const defaultOutputDir = resolveFromExecutable('reports', 'billing');
-    const defaultInvoiceNum = '1000';
-
-    // Load billing frequency options from QB_Invoice_fields.csv
-    const qbInvoiceFieldsPath = resolveFromExecutable('mappings', 'QB_Invoice_fields.csv');
-    const freqSet = new Set<string>();
-    await new Promise<void>((resolve, reject) => {
-      fs.createReadStream(qbInvoiceFieldsPath)
-        .pipe(csvParse({ headers: true }))
-        .on('data', (row: any) => {
-          if (row['Billing Frequency']) freqSet.add(row['Billing Frequency']);
-        })
-        .on('end', resolve)
-        .on('error', reject);
-    });
-    const freqOptions = Array.from(freqSet).sort();
-    const freqList = ['All', ...freqOptions];
-
-    // Prompt for billing frequency filter
-    let freqChoice: string | undefined;
-    let selectedFreq = 'All';
-    const freqPrompt = freqList.map((f, i) => `  ${i}. ${f}`).join('\n');
-    freqChoice = await this.question(`Select Billing Frequency filter:\n${freqPrompt}\nChoice [0]: `);
-    const idx = freqChoice ? parseInt(freqChoice, 10) : 0;
-    if (!isNaN(idx) && idx >= 0 && idx < freqList.length) selectedFreq = freqList[idx];
-
-    let startDate = this.options.startDate;
-    let endDate = this.options.endDate;
-    let invoiceNumber = this.options.invoiceNumber;
-    let outputDir = this.options.outputDir;
-
-    if (!startDate) {
-      startDate = await this.question(`Enter start date (MM/DD/YYYY) [${defaultDate}]: `);
-      if (!startDate) startDate = defaultDate;
-
-      while (!this.validateDate(startDate)) {
-        Logger.error('Invalid date format. Please use MM/DD/YYYY.');
-        startDate = await this.question('Enter start date (MM/DD/YYYY): ');
-      }
-    }
-
-    if (!endDate) {
-      endDate = await this.question(`Enter end date (MM/DD/YYYY) [${defaultDate}]: `);
-      if (!endDate) endDate = defaultDate;
-
-      while (!this.validateDate(endDate)) {
-        Logger.error('Invalid date format. Please use MM/DD/YYYY.');
-        endDate = await this.question('Enter end date (MM/DD/YYYY): ');
-      }
-    }
-
-    if (!invoiceNumber) {
-      invoiceNumber = await this.question(`Enter starting invoice number [${defaultInvoiceNum}]: `);
-      if (!invoiceNumber) invoiceNumber = defaultInvoiceNum;
-    }
-
-    if (!outputDir) {
-      outputDir = await this.question(`Enter output directory [${defaultOutputDir}]: `);
-      if (!outputDir) outputDir = defaultOutputDir;
-    }
-
-    return {
-      startDate,
-      endDate,
-      invoiceNumber: parseInt(invoiceNumber, 10),
-      outputDir: path.resolve(outputDir),
-      billingFrequencyFilter: selectedFreq
-    };
-  }
-
   private async buildPayerMap(inputCsv: string): Promise<Record<string, string>> {
     return new Promise((resolve, reject) => {
       const payerMap: Record<string, string> = {};
@@ -245,63 +74,42 @@ NOTES:
     return `${year}_${month.padStart(2, '0')}_${day.padStart(2, '0')}`;
   }
 
-  async run(): Promise<void> {
-    const options = this.parseArgs();
-
-    if (options.help) {
-      this.showHelp();
-      this.rl.close();
-      return;
-    }
-
+  /**
+   * Execute billing workflow with form inputs (for UI integration)
+   */
+  async runFromFormInputs(inputs: BillingWorkflowFormInputs): Promise<{ success: boolean; message: string; outputDir: string }> {
     try {
       console.log(`Lakeshore Transportation Billing Workflow v${packageJson.version}`);
-      Logger.info('starting Lakeshore Transportation Billing Workflow', true);
+      Logger.info('Starting Lakeshore Transportation Billing Workflow from form inputs', true);
       
-      const logFile = this.options.logFile || resolveFromExecutable('logs', `billing-workflow-${this.getDateString()}.log`);
+      const logFile = Logger.getLogFilePath();
       Logger.info(`Log file: ${logFile}`, true);
 
-      let startDate: string, endDate: string, invoiceNumber: number, outputDir: string, billingFrequencyFilter: string;
-
-      if (options.interactive || !options.startDate || !options.endDate) {
-        Logger.info('Starting interactive input mode...');
-        const inputs = await this.getInputsInteractively();
-        startDate = inputs.startDate;
-        endDate = inputs.endDate;
-        invoiceNumber = inputs.invoiceNumber;
-        outputDir = inputs.outputDir;
-        billingFrequencyFilter = inputs.billingFrequencyFilter;
-      } else {
-        // Use provided options or defaults
-        const today = new Date();
-        const defaultDate = this.formatDateToMDY(today);
-
-        startDate = options.startDate || defaultDate;
-        endDate = options.endDate || defaultDate;
-        invoiceNumber = parseInt(options.invoiceNumber || '1000', 10);
-        outputDir = path.resolve(options.outputDir || resolveFromExecutable('reports', 'billing'));
-        billingFrequencyFilter = 'All';
-      }
-
-      // Don't close readline here if we're in interactive mode
+      // Use form inputs
+      const startDate = inputs.startDate;
+      const endDate = inputs.endDate;
+      const invoiceNumber = inputs.invoiceNumber;
+      const outputDir = path.resolve(inputs.outputFolder);
+      const billingFrequencyFilter = inputs.billingFrequency;
 
       // Validate dates
       if (!this.validateDate(startDate)) {
-        Logger.error(`Invalid start date format: ${startDate}. Please use MM/DD/YYYY format.`);
-        this.rl.close();
-        process.exit(1);
+        const errorMsg = `Invalid start date format: ${startDate}. Please use MM/DD/YYYY format.`;
+        Logger.error(errorMsg);
+        return { success: false, message: errorMsg, outputDir };
       }
 
       if (!this.validateDate(endDate)) {
-        Logger.error(`Invalid end date format: ${endDate}. Please use MM/DD/YYYY format.`);
-        this.rl.close();
-        process.exit(1);
+        const errorMsg = `Invalid end date format: ${endDate}. Please use MM/DD/YYYY format.`;
+        Logger.error(errorMsg);
+        return { success: false, message: errorMsg, outputDir };
       }
 
       Logger.info(`Configuration:`);
       Logger.info(`  • Date Range: ${startDate} to ${endDate}`);
       Logger.info(`  • Starting Invoice Number: ${invoiceNumber}`);
       Logger.info(`  • Output Directory: ${outputDir}`);
+      Logger.info(`  • Billing Frequency Filter: ${billingFrequencyFilter}`);
 
       // Ensure output directory exists
       if (!fs.existsSync(outputDir)) {
@@ -344,56 +152,38 @@ NOTES:
       const today = new Date();
       await buildQBSyncFile(records, qbCodes, invoiceNumber, today, outputDir, payerMap, billingFrequencyFilter);
 
-
-      // Summary
-      Logger.success(
-        `Billing workflow completed successfully - Generated files:\n  
-        • Billing Report: ${billingCsvPath}\n  
-        • Invoices: ${invoicesCsvPath}\n  
-        • QuickBooks Sync: QB sync file in ${outputDir}`,
-      );
-
       const fileCount = fs.readdirSync(outputDir).length;
-      Logger.info(`Total files in output directory: ${fileCount}`);
+      const successMessage = `Billing workflow completed successfully! Generated ${fileCount} files in ${outputDir}`;
+      
+      Logger.success(successMessage);
+      Logger.info(`Generated files:\n  • Billing Report: ${billingCsvPath}\n  • Invoices: ${invoicesCsvPath}\n  • QuickBooks Sync file in ${outputDir}`);
 
-      // Wait for user to press enter before exiting
-      await this.question('\n✅ Workflow completed! Press Enter to exit...');
+      return { 
+        success: true, 
+        message: successMessage,
+        outputDir 
+      };
 
     } catch (error: any) {
-      console.log(error);
-      Logger.error(`❌ Workflow failed:${error}`);
+      const errorMessage = `Workflow failed: ${error.message || error}`;
+      Logger.error(errorMessage);
 
       if (error.message?.includes('authenticate') || error.message?.includes('credentials')) {
         Logger.error('Authentication failed. Please check your RouteGenie credentials in .env file.');
-        Logger.error('Make sure RG_CLIENT_ID and RG_CLIENT_SECRET are set in your .env file.');
       } else if (error.message?.includes('ENOENT')) {
         Logger.error('File not found. Please check that all required mapping files exist.');
-        Logger.error('Required files: mappings/QB_Service_codes.csv');
       } else if (error.message?.includes('network') || error.message?.includes('timeout')) {
         Logger.error('Network error. Please check your internet connection and try again.');
       }
 
-      // Wait for user to press enter before exiting even on error
-      await this.question('\n❌ Workflow failed! Press Enter to exit...');
-      process.exit(1);
-    } finally {
-      this.rl.close();
-      Logger.close();
+      return { 
+        success: false, 
+        message: errorMessage,
+        outputDir: inputs.outputFolder 
+      };
     }
   }
 }
 
-// Handle uncaught errors
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
-});
-
-process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
-  process.exit(1);
-});
-
-// Run the workflow
-const workflow = new BillingWorkflowInteractive({});
-workflow.run();
+// Export for use in other modules
+export { BillingWorkflowInteractive, BillingWorkflowFormInputs };
