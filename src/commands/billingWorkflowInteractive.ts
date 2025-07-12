@@ -176,15 +176,15 @@ class BillingWorkflowInteractive {
 
     } catch (error: any) {
       const errorMessage = `Workflow failed: ${error.message || error}`;
-      Logger.error(errorMessage);       if (error.message?.includes('authenticate') || error.message?.includes('credentials')) {
-         Logger.error('Authentication failed. Please check your RouteGenie credentials in .env file.');
-       } else if (error.message?.includes('ENOENT')) {
-         Logger.error('File not found. Please check that all required mapping files exist.');
-       } else if (error.message?.includes('EBUSY')) {
-         Logger.error('File is currently open or locked. Please close the file and try again.');
-       } else if (error.message?.includes('network') || error.message?.includes('timeout')) {
-         Logger.error('Network error. Please check your internet connection and try again.');
-       }
+      Logger.error(errorMessage);
+
+      if (error.message?.includes('authenticate') || error.message?.includes('credentials')) {
+        Logger.error('Authentication failed. Please check your RouteGenie credentials in .env file.');
+      } else if (error.message?.includes('ENOENT')) {
+        Logger.error('File not found. Please check that all required mapping files exist.');
+      } else if (error.message?.includes('network') || error.message?.includes('timeout')) {
+        Logger.error('Network error. Please check your internet connection and try again.');
+      }
 
       return { 
         success: false, 

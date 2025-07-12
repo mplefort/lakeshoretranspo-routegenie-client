@@ -1,11 +1,13 @@
 # Change Log
 ## Billing Rules outside route genie:
-1. MCW/CC - First 5 miles free then rate of mileage for each. Record all miles. All others payers mileage from 0 miles charged.
-2. Dead Miles:
-    - I: All dead miles
-    - MCW/CC: First 15 miles Free. If Ride>15 miles, all miles charged.
+1. MCW/CC
+  - First 5 miles free then rate of mileage for each. Record all miles. All others payers mileage from 0 miles charged.
+  - Dead Miles: First 15 miles Free. If Ride>15 miles, all miles charged.
+2. I:
+    - Dead Miles: All dead miles
 3. No show removes all other codes. This is done. Only inclusa charges a no show service code.
 4. Billing Freq Filter: Daily, Weekly, Monthly. Creates qb sync only for selected frequency and Blanks in billing freq
+5. Overwrite_miles and overwrite_dead_miles will always be billed with no other logic overwriting them.
 
 ## V1.0.8
 - Fix bug on mappings
