@@ -133,7 +133,22 @@ class BillingWorkflowInteractive {
       Logger.progress('Generating QuickBooks sync file...');
 
       const qbCodesPath = resolveFromExecutable('mappings', 'QB_Service_codes.csv');
+      Logger.info(`Looking for QB Service codes at: ${qbCodesPath}`);
+      
       if (!fs.existsSync(qbCodesPath)) {
+        // Try alternative paths for debugging
+        const execDir = resolveFromExecutable('');
+        Logger.error(`QB Service codes file not found at: ${qbCodesPath}`);
+        Logger.error(`Executable directory: ${execDir}`);
+        Logger.error(`Directory contents: ${fs.existsSync(execDir) ? fs.readdirSync(execDir).join(', ') : 'Directory does not exist'}`);
+        
+        const mappingsDir = resolveFromExecutable('mappings');
+        Logger.error(`Mappings directory: ${mappingsDir}`);
+        Logger.error(`Mappings directory exists: ${fs.existsSync(mappingsDir)}`);
+        if (fs.existsSync(mappingsDir)) {
+          Logger.error(`Mappings directory contents: ${fs.readdirSync(mappingsDir).join(', ')}`);
+        }
+        
         throw new Error(`QuickBooks service codes mapping file not found: ${qbCodesPath}`);
       }
 

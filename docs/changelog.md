@@ -7,6 +7,9 @@
 3. No show removes all other codes. This is done. Only inclusa charges a no show service code.
 4. Billing Freq Filter: Daily, Weekly, Monthly. Creates qb sync only for selected frequency and Blanks in billing freq
 
+## V1.0.8
+- Fix bug on mappings
+
 ## V1.0.7
 - Auto updater added
 - Show log version on start
