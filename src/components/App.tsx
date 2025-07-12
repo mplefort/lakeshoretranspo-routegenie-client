@@ -21,16 +21,16 @@ const App: React.FC = () => {
       setLastResult(result);
       console.log('Billing workflow result:', result);
       
-      if (result.success) {
-        // Close form on success
-        setShowBillingForm(false);
-      }
+      // Always close the form after getting a result (success or failure)
+      setShowBillingForm(false);
     } catch (error) {
       console.error('Failed to execute billing workflow:', error);
       setLastResult({
         success: false,
         message: `Failed to execute billing workflow: ${error}`
       });
+      // Close form even on catch error
+      setShowBillingForm(false);
     } finally {
       setIsProcessing(false);
     }
@@ -43,30 +43,85 @@ const App: React.FC = () => {
 
   // Function to detect and make folder paths clickable
   const renderMessageWithClickablePaths = (message: string) => {
-    // Regex to match Windows-style paths (e.g., ./reports/billing, C:\Users\..., etc.)
-    const pathRegex = /([A-Za-z]:[\\\/][\w\s\\\/.-]+|\.[\w\s\\\/.-]*[\w\\\/])/g;
-    const parts = message.split(pathRegex);
+    // Enhance error messages for better user experience
+    let enhancedMessage = message;
+    if (message.includes('EBUSY') && message.includes('resource busy or locked')) {
+      enhancedMessage = message + '\n\n💡 This usually means the file is open in Excel or another program. Please close the file and try again.';
+    } else if (message.includes('ENOENT')) {
+      enhancedMessage = message + '\n\n💡 This means a required file was not found. Please check that all mapping files exist.';
+    } else if (message.includes('authenticate') || message.includes('credentials')) {
+      enhancedMessage = message + '\n\n💡 Please check your RouteGenie credentials in the .env file.';
+    }
+
+    // Find all path matches first
+    const pathMatches: { match: string; start: number; end: number }[] = [];
     
-    return parts.map((part, index) => {
-      if (pathRegex.test(part)) {
-        return (
-          <span
-            key={index}
-            onClick={() => handleOpenFolder(part)}
-            style={{
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              color: 'inherit',
-              fontWeight: 'bold'
-            }}
-            title="Click to open in File Explorer"
-          >
-            {part}
-          </span>
-        );
+    // Regex patterns for different types of paths
+    const patterns = [
+      /[A-Za-z]:[\\\/][\w\s\\\/.-]+/g,  // Windows absolute paths (C:\Users\...)
+      /\.\/[\w\\\/.-]+(?:\/[\w\\\/.-]+)*/g,  // Relative paths starting with ./
+      /\.\\[\w\\\/.-]+(?:\\[\w\\\/.-]+)*/g   // Relative paths starting with .\
+    ];
+    
+    patterns.forEach(pattern => {
+      let match;
+      while ((match = pattern.exec(enhancedMessage)) !== null) {
+        const matchText = match[0];
+        // Exclude matches that are clearly not file paths
+        if (!matchText.includes(' Please ') && 
+            !matchText.includes(' This ') && 
+            !matchText.includes(' close ') &&
+            !matchText.includes(' try ') &&
+            !matchText.endsWith(' again') &&
+            matchText.length > 3) {
+          pathMatches.push({
+            match: matchText,
+            start: match.index,
+            end: match.index + matchText.length
+          });
+        }
       }
-      return part;
     });
+
+    // Sort matches by position (descending) to process from end to beginning
+    pathMatches.sort((a, b) => b.start - a.start);
+
+    // Build result by processing the message and wrapping paths
+    const result: (string | React.ReactElement)[] = [];
+    let lastIndex = enhancedMessage.length;
+
+    pathMatches.forEach((pathMatch, index) => {
+      // Add text after this match
+      if (lastIndex > pathMatch.end) {
+        result.unshift(enhancedMessage.substring(pathMatch.end, lastIndex));
+      }
+      
+      // Add the clickable path
+      result.unshift(
+        <span
+          key={`path-${index}`}
+          onClick={() => handleOpenFolder(pathMatch.match)}
+          style={{
+            textDecoration: 'underline',
+            cursor: 'pointer',
+            color: 'inherit',
+            fontWeight: 'bold'
+          }}
+          title="Click to open in File Explorer"
+        >
+          {pathMatch.match}
+        </span>
+      );
+      
+      lastIndex = pathMatch.start;
+    });
+
+    // Add any remaining text at the beginning
+    if (lastIndex > 0) {
+      result.unshift(enhancedMessage.substring(0, lastIndex));
+    }
+
+    return result.length > 0 ? result : [enhancedMessage];
   };
 
   const handleOpenFolder = async (folderPath: string) => {
@@ -203,6 +258,7 @@ const App: React.FC = () => {
             fontSize: '0.9rem',
             border: `1px solid ${lastResult.success ? '#c3e6cb' : '#f5c6cb'}`,
             color: lastResult.success ? '#155724' : '#721c24',
+            whiteSpace: 'pre-line' // Allow line breaks to render properly
           }}>
             <strong>{lastResult.success ? '✅ Success:' : '❌ Error:'}</strong>
             <br />
