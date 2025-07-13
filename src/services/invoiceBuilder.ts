@@ -217,8 +217,11 @@ async function aggregateDetailFields(row: RouteRow, agg: AggregationType, key: s
       }
       
       // Special logic for Order Mileage Quantity: MCW/CC payers get 0 miles if <5 miles
+      // BUT only if overwrite_miles is not set (overwrite_miles takes absolute priority)
       if (qty === 'Order Mileage Quantity' && (payer === 'MCW' || payer === 'CC') && quantity < 5) {
-        quantity = 0;
+        if (!cacheEntry || cacheEntry.overwrite_miles === undefined || cacheEntry.overwrite_miles === null) {
+          quantity = 0;
+        }
       }
       
       if (!code || quantity === 0) continue;
@@ -256,16 +259,28 @@ async function aggregateCustomServiceCodes(row: RouteRow, agg: AggregationType, 
       
       const itemKey = `${code}-${modifier}-${payer}`;
       if (code === 'S0215') {
-        if (payer === 'I') {
+        // Check if overwrite_dead_miles is set - if so, it overrides all payer logic
+        const hasOverrideDeadMiles = cacheEntry && cacheEntry.overwrite_dead_miles !== undefined && cacheEntry.overwrite_dead_miles !== null;
+        
+        if (hasOverrideDeadMiles) {
+          // Overwrite dead miles takes absolute priority - always aggregate regardless of payer or quantity
           if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0, orderIds: new Set<string>() };
           agg[key].items[itemKey].qty += quantity;
           agg[key].items[itemKey].cost += costVal;
           if (orderId) agg[key].items[itemKey].orderIds.add(orderId);
-        } else if ((payer === 'CC' || payer === 'MCW' || payer === 'PP') && quantity >= 15) {
-          if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0, orderIds: new Set<string>() };
-          agg[key].items[itemKey].qty += quantity;
-          agg[key].items[itemKey].cost += costVal;
-          if (orderId) agg[key].items[itemKey].orderIds.add(orderId);
+        } else {
+          // Apply original payer/quantity logic only when no override is set
+          if (payer === 'I') {
+            if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0, orderIds: new Set<string>() };
+            agg[key].items[itemKey].qty += quantity;
+            agg[key].items[itemKey].cost += costVal;
+            if (orderId) agg[key].items[itemKey].orderIds.add(orderId);
+          } else if ((payer === 'CC' || payer === 'MCW' || payer === 'PP') && quantity >= 15) {
+            if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0, orderIds: new Set<string>() };
+            agg[key].items[itemKey].qty += quantity;
+            agg[key].items[itemKey].cost += costVal;
+            if (orderId) agg[key].items[itemKey].orderIds.add(orderId);
+          }
         }
       } else {
         if (!agg[key].items[itemKey]) agg[key].items[itemKey] = { qty: 0, cost: 0, orderIds: new Set<string>() };
