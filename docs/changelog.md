@@ -9,6 +9,10 @@
 4. Billing Freq Filter: Daily, Weekly, Monthly. Creates qb sync only for selected frequency and Blanks in billing freq
 5. Overwrite_miles and overwrite_dead_miles will always be billed with no other logic overwriting them.
 
+## V1.0.9
+- Overwrite_miles and overwrite_dead_miles now overwrites all rules for that ride. Bypasses 5 and 15 mi mins for mileage/dead mileage
+- Error messages now show on output.
+
 ## V1.0.8
 - Fix bug on mappings
 
