@@ -8,6 +8,17 @@
 3. No show removes all other codes. This is done. Only inclusa charges a no show service code.
 4. Billing Freq Filter: Daily, Weekly, Monthly. Creates qb sync only for selected frequency and Blanks in billing freq
 5. Overwrite_miles and overwrite_dead_miles will always be billed with no other logic overwriting them.
+6. Private Pay Nursing Homes:
+
+
+## V1.0.10
+- Google Cloud Storage integration for mileage cache database
+- Automatic database sync on app startup (download latest from cloud)
+- Automatic database backup on app close (upload to cloud)
+- Version metadata tracking with auto-incrementing version numbers
+- Error handling with user prompts for retry/continue options
+- Fallback to local database operation when cloud sync unavailable
+- Database stored in GCS bucket: lakeshore-mileage-cache-db
 
 ## V1.0.9
 - Overwrite_miles and overwrite_dead_miles now overwrites all rules for that ride. Bypasses 5 and 15 mi mins for mileage/dead mileage

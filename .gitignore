@@ -62,7 +62,7 @@ typings/
 .env.test
 .env.dev
 .env-cmdrc.json
-
+keys/
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 

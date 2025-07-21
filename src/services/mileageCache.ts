@@ -2,12 +2,16 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
+import { Storage } from '@google-cloud/storage';
 import { Logger } from '../utils/logger';
 import { normalizeAddress, normalizeName } from '../utils/addressNormalizer';
 import { getShortestDistance } from '../adapters/googleMaps';
 
 // Constants
 const COMPANY_ADDRESS = "N5806 Co Rd M, Plymouth, WI 53073, USA";
+const GCS_BUCKET_NAME = "lakeshore-mileage-cache-db";
+const GCS_DB_FILENAME = "mileage_cache.db";
+const GCS_METADATA_FILENAME = "mileage_cache_metadata.json";
 
 /**
  * Get the user data directory path for storing persistent data
@@ -62,16 +66,217 @@ export interface CacheQueryParams {
   doAddress: string;
 }
 
+export interface DatabaseMetadata {
+  version: number;
+  lastSync: string;
+  lastModified: string;
+  fileSize: number;
+}
+
 export class MileageCache {
   private db: Database.Database | null = null;
   private dbPath: string;
+  private metadataPath: string;
   private isInitialized = false;
+  private storage: Storage | null = null;
+  private bucket: any = null;
 
   constructor() {
     // Use user data directory for persistent storage across app updates
     const userDataPath = getUserDataPath();
     const dataDir = path.join(userDataPath, 'data');
     this.dbPath = path.join(dataDir, 'mileage_cache.db');
+    this.metadataPath = path.join(dataDir, 'mileage_cache_metadata.json');
+    
+    // Initialize Google Cloud Storage
+    this.initializeGCS();
+  }
+
+  /**
+   * Initialize Google Cloud Storage client
+   */
+  private initializeGCS(): void {
+    try {
+      const keyPath = process.env.GOOGLE_CLOUD_STORAGE_KEY;
+      if (!keyPath) {
+        Logger.warn('GOOGLE_CLOUD_STORAGE_KEY environment variable not set');
+        return;
+      }
+
+      // Check if key file exists
+      if (!fs.existsSync(keyPath)) {
+        Logger.warn(`Google Cloud Storage key file not found: ${keyPath}`);
+        return;
+      }
+
+      this.storage = new Storage({
+        keyFilename: keyPath,
+      });
+
+      this.bucket = this.storage.bucket(GCS_BUCKET_NAME);
+      Logger.info('Google Cloud Storage client initialized successfully');
+    } catch (error) {
+      Logger.error('Failed to initialize Google Cloud Storage client:', error);
+    }
+  }
+
+  /**
+   * Download database from Google Cloud Storage
+   */
+  private async downloadDatabaseFromCloud(): Promise<boolean> {
+    if (!this.storage || !this.bucket) {
+      Logger.warn('Google Cloud Storage not initialized, skipping download');
+      return false;
+    }
+
+    try {
+      const file = this.bucket.file(GCS_DB_FILENAME);
+      const metadataFile = this.bucket.file(GCS_METADATA_FILENAME);
+
+      // Check if files exist
+      const [fileExists] = await file.exists();
+      const [metadataExists] = await metadataFile.exists();
+
+      if (!fileExists) {
+        Logger.info('No remote database found, will create new local database');
+        return true; // Not an error, just no remote DB yet
+      }
+
+      Logger.info('Downloading database from Google Cloud Storage...');
+
+      // Download database file
+      await file.download({ destination: this.dbPath });
+      Logger.info(`Database downloaded to: ${this.dbPath}`);
+
+      // Download metadata if it exists
+      if (metadataExists) {
+        await metadataFile.download({ destination: this.metadataPath });
+        Logger.info(`Metadata downloaded to: ${this.metadataPath}`);
+      }
+
+      return true;
+    } catch (error) {
+      Logger.error('Failed to download database from cloud:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Upload database to Google Cloud Storage
+   */
+  private async uploadDatabaseToCloud(): Promise<boolean> {
+    if (!this.storage || !this.bucket) {
+      Logger.warn('Google Cloud Storage not initialized, skipping upload');
+      return false;
+    }
+
+    try {
+      // Close database connection temporarily for upload
+      if (this.db) {
+        this.db.close();
+      }
+
+      // Create/update metadata
+      const metadata = await this.createMetadata();
+      fs.writeFileSync(this.metadataPath, JSON.stringify(metadata, null, 2));
+
+      Logger.info('Uploading database to Google Cloud Storage...');
+
+      // Upload database file
+      const dbFile = this.bucket.file(GCS_DB_FILENAME);
+      await dbFile.save(fs.readFileSync(this.dbPath));
+
+      // Upload metadata
+      const metadataFile = this.bucket.file(GCS_METADATA_FILENAME);
+      await metadataFile.save(fs.readFileSync(this.metadataPath));
+
+      Logger.info('Database uploaded to Google Cloud Storage successfully');
+
+      // Reconnect to database
+      this.db = new Database(this.dbPath);
+
+      return true;
+    } catch (error) {
+      Logger.error('Failed to upload database to cloud:', error);
+      // Reconnect to database even if upload failed
+      try {
+        this.db = new Database(this.dbPath);
+      } catch (dbError) {
+        Logger.error('Failed to reconnect to database after upload failure:', dbError);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Create metadata for the database
+   */
+  private async createMetadata(): Promise<DatabaseMetadata> {
+    const stats = fs.statSync(this.dbPath);
+    let version = 1;
+
+    // Try to read existing metadata to increment version
+    try {
+      if (fs.existsSync(this.metadataPath)) {
+        const existingMetadata = JSON.parse(fs.readFileSync(this.metadataPath, 'utf8'));
+        version = (existingMetadata.version || 0) + 1;
+      }
+    } catch (error) {
+      Logger.warn('Could not read existing metadata, starting with version 1');
+    }
+
+    return {
+      version,
+      lastSync: new Date().toISOString(),
+      lastModified: stats.mtime.toISOString(),
+      fileSize: stats.size
+    };
+  }
+
+  /**
+   * Show user prompt for retry or continue
+   */
+  private async showRetryPrompt(message: string, action: string): Promise<boolean> {
+    // In an Electron app, you'd typically use dialog.showMessageBox
+    // For now, we'll use console and return true to continue
+    Logger.warn(`${message} - ${action}`);
+    
+    // TODO: Implement actual user dialog when in Electron context
+    // Example implementation for Electron:
+    /*
+    try {
+      const { dialog } = require('electron');
+      const response = await dialog.showMessageBox({
+        type: 'warning',
+        buttons: ['Retry', 'Continue'],
+        defaultId: 0,
+        message: message,
+        detail: action
+      });
+      return response.response === 0; // 0 = Retry, 1 = Continue
+    } catch (error) {
+      // Fallback if not in Electron context
+      return true;
+    }
+    */
+    
+    // For now, return true to continue (can be customized based on needs)
+    return true;
+  }
+
+  /**
+   * Get current database metadata
+   */
+  async getDatabaseMetadata(): Promise<DatabaseMetadata | null> {
+    try {
+      if (fs.existsSync(this.metadataPath)) {
+        const metadata = JSON.parse(fs.readFileSync(this.metadataPath, 'utf8'));
+        return metadata;
+      }
+    } catch (error) {
+      Logger.error('Error reading database metadata:', error);
+    }
+    return null;
   }
 
   /**
@@ -88,11 +293,44 @@ export class MileageCache {
         Logger.info(`Created data directory: ${dataDir}`);
       }
 
+      // Try to download latest database from cloud
+      let downloadSuccess = false;
+      try {
+        downloadSuccess = await this.downloadDatabaseFromCloud();
+      } catch (error) {
+        Logger.error('Error during cloud download:', error);
+      }
+
+      // If download failed, show retry prompt
+      if (!downloadSuccess && this.storage && this.bucket) {
+        const shouldRetry = await this.showRetryPrompt(
+          'Unable to pull database from cloud. Please check your internet connection.',
+          'Would you like to retry download or continue with local database only?'
+        );
+
+        if (shouldRetry) {
+          try {
+            downloadSuccess = await this.downloadDatabaseFromCloud();
+          } catch (retryError) {
+            Logger.error('Retry download failed:', retryError);
+            Logger.warn('Continuing with local database only');
+          }
+        }
+      }
+
+      // Connect to local database (either downloaded or existing)
       this.db = new Database(this.dbPath);
       Logger.info(`Connected to mileage cache database at ${this.dbPath}`);
       
       this.createTables();
       this.isInitialized = true;
+
+      if (downloadSuccess) {
+        Logger.success('Database synchronized from cloud successfully');
+      } else if (this.storage && this.bucket) {
+        Logger.warn('Running with local database only - cloud sync unavailable');
+      }
+
     } catch (err) {
       Logger.error('Failed to connect to mileage cache database:', err);
       throw err;
@@ -315,9 +553,48 @@ export class MileageCache {
   async close(): Promise<void> {
     if (this.db) {
       try {
-        this.db.close();
+        // Try to upload database to cloud before closing
+        let uploadSuccess = false;
+        if (this.storage && this.bucket) {
+          try {
+            uploadSuccess = await this.uploadDatabaseToCloud();
+          } catch (error) {
+            Logger.error('Error during cloud upload:', error);
+          }
+
+          // If upload failed, show retry prompt
+          if (!uploadSuccess) {
+            const shouldRetry = await this.showRetryPrompt(
+              'Unable to push database to cloud. Changes may be lost.',
+              'Would you like to retry upload or continue closing without saving to cloud?'
+            );
+
+            if (shouldRetry) {
+              try {
+                uploadSuccess = await this.uploadDatabaseToCloud();
+              } catch (retryError) {
+                Logger.error('Retry upload failed:', retryError);
+                Logger.warn('Closing without cloud backup');
+              }
+            }
+          }
+        }
+
+        // Close database connection (if not already closed by upload process)
+        if (this.db) {
+          this.db.close();
+        }
+        
         this.isInitialized = false;
-        Logger.info('Mileage cache database connection closed');
+        
+        if (uploadSuccess) {
+          Logger.success('Database backed up to cloud and connection closed');
+        } else if (this.storage && this.bucket) {
+          Logger.warn('Database connection closed - cloud backup failed');
+        } else {
+          Logger.info('Mileage cache database connection closed');
+        }
+
       } catch (err) {
         Logger.error('Error closing mileage cache database:', err);
         throw err;
@@ -348,4 +625,5 @@ export const mileageCache = {
     getMileageCache().createCacheEntry(params, rgMiles, rgDeadMiles),
   getCachedMileage: (entry: MileageCacheEntry) => getMileageCache().getCachedMileage(entry),
   getCachedDeadMileage: (entry: MileageCacheEntry) => getMileageCache().getCachedDeadMileage(entry),
+  getDatabaseMetadata: () => getMileageCache().getDatabaseMetadata(),
 };

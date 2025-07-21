@@ -1,7 +1,7 @@
 {
   "name": "lakeshoretranspo-routegenie-client",
   "productName": "Lakeshore Invoicer",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Lakeshore Transportation invoicing application",
   "main": ".webpack/main",
   "scripts": {
@@ -17,7 +17,7 @@
     "name": "Matthew LeFort",
     "email": "matthewlefort@gmail.com"
   },
-    "repository": {
+  "repository": {
     "type": "git",
     "url": "https://github.com/mplefort/lakeshoretranspo-routegenie-client.git"
   },
@@ -56,6 +56,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.16.0",
     "@googlemaps/google-maps-services-js": "^3.4.1",
     "@types/google.maps": "^3.55.12",
     "@types/react": "^19.1.8",
