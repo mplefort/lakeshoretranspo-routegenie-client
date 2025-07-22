@@ -64,6 +64,7 @@ const App: React.FC = () => {
     // Regex patterns for different types of paths
     const patterns = [
       /[A-Za-z]:[\\\/][\w\s\\\/.-]+/g,  // Windows absolute paths (C:\Users\...)
+      /\/[\w\s\/.-]+(?:\/[\w\s\/.-]+)*/g,  // Unix/macOS absolute paths (/Applications/...)
       /\.\/[\w\\\/.-]+(?:\/[\w\\\/.-]+)*/g,  // Relative paths starting with ./
       /\.\\[\w\\\/.-]+(?:\\[\w\\\/.-]+)*/g   // Relative paths starting with .\
     ];
