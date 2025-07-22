@@ -26,7 +26,7 @@ const config: ForgeConfig = {
        'reports',
        'docs'
      ],
-     icon: process.platform === 'darwin' ? 'src/img/LST_icon_mac' : 'src/img/LST_icon_win'
+     icon: process.platform === 'darwin' ? 'src/img/LST_icon_mac.icns' : 'src/img/LST_icon_win.ico'
   },
   rebuildConfig: {},
   makers: [

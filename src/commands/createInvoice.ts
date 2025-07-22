@@ -5,7 +5,7 @@ import { buildInvoices, flattenAggregatedResults, parseCsvRows, aggregateRows } 
 import { loadQBServiceCodes, buildQBSyncFile } from '../services/qbSync';
 import { Logger } from '../utils/logger';
 import { UserInputMain } from '../utils/userInputMain';
-import { resolveFromExecutable } from '../utils/paths';
+import { resolveFromExecutable, getExecutableDir } from '../utils/paths';
 import { parse as csvParse } from 'fast-csv';
 import { config } from 'dotenv';
 
@@ -74,7 +74,14 @@ class createInvoice {
       const startDate = inputs.startDate;
       const endDate = inputs.endDate;
       const invoiceNumber = inputs.invoiceNumber;
-      const outputDir = path.resolve(inputs.outputFolder);
+      
+      // Properly resolve the output directory
+      // If it's a relative path, resolve it relative to the executable directory
+      // If it's an absolute path, use it as-is
+      const outputDir = path.isAbsolute(inputs.outputFolder) 
+        ? inputs.outputFolder 
+        : resolveFromExecutable(inputs.outputFolder);
+      
       const billingFrequencyFilter = inputs.billingFrequency;
 
       // Validate dates
