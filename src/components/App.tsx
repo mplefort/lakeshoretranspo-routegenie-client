@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import BillingWorkflowModule from './modules/BillingWorkflowModule';
+import UserInputDialog from './common/UserInputDialog';
+import { useUserInputDialog } from './common/useUserInputDialog';
 import { BillingWorkflowFormInputs } from '../types/electron';
 
 const App: React.FC = () => {
   const [showBillingForm, setShowBillingForm] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [lastResult, setLastResult] = useState<{ success: boolean; message: string } | null>(null);
+  
+  // User Input Dialog hook
+  const userInputDialog = useUserInputDialog();
 
   const handleCreateBilling = () => {
     setShowBillingForm(true);
@@ -274,6 +279,14 @@ const App: React.FC = () => {
           isProcessing={isProcessing}
         />
       )}
+
+      {/* User Input Dialog */}
+      <UserInputDialog
+        isOpen={userInputDialog.isOpen}
+        options={userInputDialog.options}
+        onResponse={userInputDialog.onResponse}
+        onCancel={userInputDialog.onCancel}
+      />
     </>
   );
 };

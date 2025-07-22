@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, shell, Menu } from 'electron';
-import { HelloService } from './services/hello';
-import { BillingWorkflowInteractive, BillingWorkflowFormInputs } from './commands/billingWorkflowInteractive';
+import { createInvoice, BillingWorkflowFormInputs } from './commands/createInvoice';
+import { UserInputMain } from './utils/userInputMain';
 import { updateElectronApp } from 'update-electron-app';
 import { Logger } from './utils/logger';
 
@@ -199,8 +199,8 @@ const createApplicationMenu = (): void => {
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    height: 600,
-    width: 800,
+    height: 800,
+    width: 1000,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
@@ -247,16 +247,9 @@ app.on('activate', () => {
 
 // Set up IPC handlers
 const setupIpcHandlers = () => {
-  // Hello service IPC handlers
-  ipcMain.handle('hello:getMessage', async () => {
-    console.log('Hello message requested');
-    return HelloService.getHelloMessage();
-  });
-
-  ipcMain.handle('hello:getCustomMessage', async (event, name: string) => {
-    console.log('Custom hello message requested for:', name);
-    return HelloService.getCustomMessage(name);
-  });
+  
+  // Initialize UserInput system
+  UserInputMain.initialize();
 
   // Existing QB sync handler
   ipcMain.handle('qb:sync', async (event, data: any) => {
@@ -269,7 +262,7 @@ const setupIpcHandlers = () => {
   ipcMain.handle('billingWorkflow:execute', async (event, inputs: BillingWorkflowFormInputs) => {
     console.log('Billing workflow requested:', inputs);
     try {
-      const workflow = new BillingWorkflowInteractive();
+      const workflow = new createInvoice();
       const result = await workflow.runFromFormInputs(inputs);
       return result;
     } catch (error: any) {

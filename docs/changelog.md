@@ -13,12 +13,8 @@
 
 ## V1.0.10
 - Google Cloud Storage integration for mileage cache database
-- Automatic database sync on app startup (download latest from cloud)
-- Automatic database backup on app close (upload to cloud)
-- Version metadata tracking with auto-incrementing version numbers
-- Error handling with user prompts for retry/continue options
-- Fallback to local database operation when cloud sync unavailable
 - Database stored in GCS bucket: lakeshore-mileage-cache-db
+- Added comprehensive user input dialog system for improved user interaction and error handling
 
 ## V1.0.9
 - Overwrite_miles and overwrite_dead_miles now overwrites all rules for that ride. Bypasses 5 and 15 mi mins for mileage/dead mileage

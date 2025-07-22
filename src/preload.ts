@@ -2,14 +2,10 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
 import { contextBridge, ipcRenderer } from 'electron';
-import { IElectronAPI, BillingWorkflowFormInputs } from './types/electron';
+import { IElectronAPI, BillingWorkflowFormInputs, UserInputOptions, UserInputResponse } from './types/electron';
 
 // Define the API that will be exposed to the renderer process
 const electronAPI: IElectronAPI = {
-  hello: {
-    getMessage: () => ipcRenderer.invoke('hello:getMessage'),
-    getCustomMessage: (name: string) => ipcRenderer.invoke('hello:getCustomMessage', name),
-  },
   getVersions: () => ({
     node: process.versions.node,
     chrome: process.versions.chrome,
@@ -32,6 +28,17 @@ const electronAPI: IElectronAPI = {
   openMileageCacheFolder: () => ipcRenderer.invoke('shell:openMileageCacheFolder'),
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSettings: (settings: any) => ipcRenderer.invoke('settings:set', settings),
+  userInput: {
+    onShowDialog: (callback: (requestId: string, options: UserInputOptions) => void) => {
+      ipcRenderer.on('show-user-input-dialog', (event, requestId: string, options: UserInputOptions) => {
+        callback(requestId, options);
+      });
+    },
+    sendResponse: (requestId: string, response: UserInputResponse) => 
+      ipcRenderer.invoke('user-input-response', requestId, response),
+    sendCancel: (requestId: string, error: string) => 
+      ipcRenderer.invoke('user-input-cancel', requestId, error),
+  },
 };
 
 // Expose the API to the renderer process

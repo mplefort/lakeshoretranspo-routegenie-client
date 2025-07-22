@@ -4,6 +4,7 @@ import { generateBillingReport } from '../adapters/routeGenie';
 import { buildInvoices, flattenAggregatedResults, parseCsvRows, aggregateRows } from '../services/invoiceBuilder';
 import { loadQBServiceCodes, buildQBSyncFile } from '../services/qbSync';
 import { Logger } from '../utils/logger';
+import { UserInputMain } from '../utils/userInputMain';
 import { resolveFromExecutable } from '../utils/paths';
 import { parse as csvParse } from 'fast-csv';
 import { config } from 'dotenv';
@@ -19,7 +20,7 @@ interface BillingWorkflowFormInputs {
   outputFolder: string;
 }
 
-class BillingWorkflowInteractive {
+class createInvoice {
   constructor() {
     // Initialize logger with default settings for UI usage
     // This will use electron-log's default location:
@@ -29,17 +30,6 @@ class BillingWorkflowInteractive {
     Logger.initialize(undefined, false); // No debug mode for UI, use default location
   }
 
-  private getDateString(): string {
-    const now = new Date();
-    return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
-  }
-
-  private formatDateToMDY(date: Date): string {
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
-  }
 
   private validateDate(dateStr: string): boolean {
     const regex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/\d{4}$/;
@@ -148,8 +138,35 @@ class BillingWorkflowInteractive {
         if (fs.existsSync(mappingsDir)) {
           Logger.error(`Mappings directory contents: ${fs.readdirSync(mappingsDir).join(', ')}`);
         }
-        
-        throw new Error(`QuickBooks service codes mapping file not found: ${qbCodesPath}`);
+
+        // Example of using UserInput for error handling
+        try {
+          const shouldContinue = await UserInputMain.confirm(
+            `QuickBooks service codes mapping file not found at:\n${qbCodesPath}\n\nWould you like to continue without generating the QuickBooks sync file?`,
+            'Missing QB Service Codes'
+          );
+          
+          if (!shouldContinue) {
+            throw new Error(`QuickBooks service codes mapping file not found: ${qbCodesPath}`);
+          }
+          
+          Logger.info('User chose to continue without QB sync file generation');
+          // Skip QB sync file generation but continue with the rest
+          const fileCount = fs.readdirSync(outputDir).length;
+          const successMessage = `Billing workflow completed successfully! Generated ${fileCount} files in ${outputDir} (QB sync file skipped)`;
+          
+          Logger.success(successMessage);
+          Logger.info(`Generated files:\n  • Billing Report: ${billingCsvPath}\n  • Invoices: ${invoicesCsvPath}`);
+
+          return { 
+            success: true, 
+            message: successMessage,
+            outputDir 
+          };
+        } catch (userInputError) {
+          // If user input fails, fall back to original error
+          throw new Error(`QuickBooks service codes mapping file not found: ${qbCodesPath}`);
+        }
       }
 
       const qbCodes = await loadQBServiceCodes(qbCodesPath);
@@ -196,4 +213,4 @@ class BillingWorkflowInteractive {
 }
 
 // Export for use in other modules
-export { BillingWorkflowInteractive, BillingWorkflowFormInputs };
+export { createInvoice, BillingWorkflowFormInputs };

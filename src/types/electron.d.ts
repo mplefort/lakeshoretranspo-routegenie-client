@@ -1,9 +1,3 @@
-export interface HelloResponse {
-  message: string;
-  timestamp: string;
-  source: string;
-}
-
 export interface BillingWorkflowFormInputs {
   startDate: string;
   endDate: string;
@@ -18,13 +12,30 @@ export interface BillingWorkflowResult {
   outputDir: string;
 }
 
-export interface IElectronAPI {
-  // Hello service
-  hello: {
-    getMessage: () => Promise<HelloResponse>;
-    getCustomMessage: (name: string) => Promise<HelloResponse>;
+export interface UserInputButton {
+  id: string;
+  label: string;
+  variant?: 'primary' | 'secondary' | 'danger';
+}
+
+export interface UserInputOptions {
+  message: string;
+  title?: string;
+  textInput?: {
+    placeholder?: string;
+    defaultValue?: string;
+    required?: boolean;
   };
-  
+  buttons: UserInputButton[];
+}
+
+export interface UserInputResponse {
+  buttonId: string;
+  textValue?: string;
+}
+
+export interface IElectronAPI {
+
   // App version info
   getVersions: () => {
     node: string;
@@ -59,6 +70,13 @@ export interface IElectronAPI {
   // Settings
   getSettings: () => Promise<any>;
   setSettings: (settings: any) => Promise<void>;
+  
+  // User Input
+  userInput: {
+    onShowDialog: (callback: (requestId: string, options: UserInputOptions) => void) => void;
+    sendResponse: (requestId: string, response: UserInputResponse) => void;
+    sendCancel: (requestId: string, error: string) => void;
+  };
 }
 
 declare global {

@@ -47,7 +47,7 @@ const BillingWorkflowModule: React.FC<BillingWorkflowModuleProps> = ({ onSubmit,
   };
 
   return (
-    <div style={{
+    <div className="billing-workflow-module" style={{
       position: 'fixed',
       top: 0,
       left: 0,

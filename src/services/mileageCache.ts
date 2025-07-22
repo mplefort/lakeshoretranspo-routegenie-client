@@ -6,6 +6,7 @@ import { Storage } from '@google-cloud/storage';
 import { Logger } from '../utils/logger';
 import { normalizeAddress, normalizeName } from '../utils/addressNormalizer';
 import { getShortestDistance } from '../adapters/googleMaps';
+import { UserInputMain } from '../utils/userInputMain';
 
 // Constants
 const COMPANY_ADDRESS = "N5806 Co Rd M, Plymouth, WI 53073, USA";
@@ -80,6 +81,7 @@ export class MileageCache {
   private isInitialized = false;
   private storage: Storage | null = null;
   private bucket: any = null;
+  private isDbLocal: boolean = false; // Track if DB is local or from cloud
 
   constructor() {
     // Use user data directory for persistent storage across app updates
@@ -87,6 +89,9 @@ export class MileageCache {
     const dataDir = path.join(userDataPath, 'data');
     this.dbPath = path.join(dataDir, 'mileage_cache.db');
     this.metadataPath = path.join(dataDir, 'mileage_cache_metadata.json');
+
+    // Track if Database is local use or from cloud - defaults to true (local)
+    this.isDbLocal = true;
     
     // Initialize Google Cloud Storage
     this.initializeGCS();
@@ -99,14 +104,12 @@ export class MileageCache {
     try {
       const keyPath = process.env.GOOGLE_CLOUD_STORAGE_KEY;
       if (!keyPath) {
-        Logger.warn('GOOGLE_CLOUD_STORAGE_KEY environment variable not set');
-        return;
+        throw new Error('GOOGLE_CLOUD_STORAGE_KEY environment variable not set');
       }
 
       // Check if key file exists
       if (!fs.existsSync(keyPath)) {
-        Logger.warn(`Google Cloud Storage key file not found: ${keyPath}`);
-        return;
+        throw new Error(`Google Cloud Storage key file not found: ${keyPath}`);
       }
 
       this.storage = new Storage({
@@ -123,9 +126,12 @@ export class MileageCache {
   /**
    * Download database from Google Cloud Storage
    */
+  
   private async downloadDatabaseFromCloud(): Promise<boolean> {
+    
     if (!this.storage || !this.bucket) {
       Logger.warn('Google Cloud Storage not initialized, skipping download');
+      this.isDbLocal = true; // Mark as local since we can't access cloud
       return false;
     }
 
@@ -139,6 +145,7 @@ export class MileageCache {
 
       if (!fileExists) {
         Logger.info('No remote database found, will create new local database');
+        this.isDbLocal = true; // Mark as local since we're creating a new one
         return true; // Not an error, just no remote DB yet
       }
 
@@ -154,9 +161,11 @@ export class MileageCache {
         Logger.info(`Metadata downloaded to: ${this.metadataPath}`);
       }
 
+      this.isDbLocal = false; // Mark as from cloud since we successfully downloaded
       return true;
     } catch (error) {
       Logger.error('Failed to download database from cloud:', error);
+      this.isDbLocal = true; // Mark as local since download failed
       return false;
     }
   }
@@ -236,32 +245,26 @@ export class MileageCache {
   /**
    * Show user prompt for retry or continue
    */
-  private async showRetryPrompt(message: string, action: string): Promise<boolean> {
-    // In an Electron app, you'd typically use dialog.showMessageBox
-    // For now, we'll use console and return true to continue
-    Logger.warn(`${message} - ${action}`);
-    
-    // TODO: Implement actual user dialog when in Electron context
-    // Example implementation for Electron:
-    /*
+  private async showRetryPrompt(message: string, isUpload: boolean = false): Promise<'retry' | 'useLocal' | 'cancel'> {
     try {
-      const { dialog } = require('electron');
-      const response = await dialog.showMessageBox({
-        type: 'warning',
-        buttons: ['Retry', 'Continue'],
-        defaultId: 0,
+      const buttons = [
+        { id: 'retry', label: 'Retry', variant: 'primary' as const },
+        { id: 'useLocal', label: isUpload ? 'Continue Without Backup' : 'Use Local', variant: 'secondary' as const },
+        { id: 'cancel', label: 'Cancel', variant: 'danger' as const }
+      ];
+
+      const response = await UserInputMain.showDialog({
+        title: 'Database Sync Issue',
         message: message,
-        detail: action
+        buttons
       });
-      return response.response === 0; // 0 = Retry, 1 = Continue
+      
+      return response.buttonId as 'retry' | 'useLocal' | 'cancel';
     } catch (error) {
-      // Fallback if not in Electron context
-      return true;
+      Logger.error('User input dialog error:', error);
+      // Default to use local if dialog fails
+      return 'useLocal';
     }
-    */
-    
-    // For now, return true to continue (can be customized based on needs)
-    return true;
   }
 
   /**
@@ -277,6 +280,13 @@ export class MileageCache {
       Logger.error('Error reading database metadata:', error);
     }
     return null;
+  }
+
+  /**
+   * Check if the database is local-only (not from cloud)
+   */
+  get isLocalDatabase(): boolean {
+    return this.isDbLocal;
   }
 
   /**
@@ -303,17 +313,28 @@ export class MileageCache {
 
       // If download failed, show retry prompt
       if (!downloadSuccess && this.storage && this.bucket) {
-        const shouldRetry = await this.showRetryPrompt(
-          'Unable to pull database from cloud. Please check your internet connection.',
-          'Would you like to retry download or continue with local database only?'
-        );
+        while (!downloadSuccess) {
+          const userChoice = await this.showRetryPrompt(
+            'Unable to pull database from cloud. Please check your internet connection.\n\nWould you like to retry download or continue with local database only?'
+          );
 
-        if (shouldRetry) {
-          try {
-            downloadSuccess = await this.downloadDatabaseFromCloud();
-          } catch (retryError) {
-            Logger.error('Retry download failed:', retryError);
-            Logger.warn('Continuing with local database only');
+          if (userChoice === 'retry') {
+            try {
+              downloadSuccess = await this.downloadDatabaseFromCloud();
+              if (!downloadSuccess) {
+                Logger.error('Retry download failed');
+              }
+            } catch (retryError) {
+              Logger.error('Retry download failed:', retryError);
+            }
+          } else if (userChoice === 'useLocal') {
+            Logger.warn('User chose to continue with local database only');
+            this.isDbLocal = true; // Mark as local since user chose to use local
+            break;
+          } else if (userChoice === 'cancel') {
+            Logger.info('User cancelled database initialization');
+            await this.close();
+            throw new Error('User canceled database initialization');
           }
         }
       }
@@ -327,8 +348,13 @@ export class MileageCache {
 
       if (downloadSuccess) {
         Logger.success('Database synchronized from cloud successfully');
+        this.isDbLocal = false; // Confirm it's from cloud
       } else if (this.storage && this.bucket) {
         Logger.warn('Running with local database only - cloud sync unavailable');
+        this.isDbLocal = true; // Confirm it's local
+      } else {
+        // No cloud storage configured
+        this.isDbLocal = true; // Definitely local
       }
 
     } catch (err) {
@@ -553,7 +579,28 @@ export class MileageCache {
   async close(): Promise<void> {
     if (this.db) {
       try {
-        // Try to upload database to cloud before closing
+        // Check if database is local-only and should not be uploaded
+        if (this.isDbLocal) {
+          Logger.info('Database is local-only, skipping cloud upload to prevent overwriting cloud version');
+          
+          // Show alert to user that database was not synced (always show if local, regardless of cloud init status)
+          try {
+            await UserInputMain.alert(
+              'Database was not synchronized with cloud to prevent overwriting the cloud version.\n\nThis session used a local database only.',
+              'Database Not Synced'
+            );
+          } catch (alertError) {
+            Logger.warn(`Could not show sync alert to user: ${alertError}`);
+          }
+          
+          // Close database connection without uploading
+          this.db.close();
+          this.isInitialized = false;
+          Logger.info('Local database connection closed without cloud sync');
+          return;
+        }
+
+        // Try to upload database to cloud before closing (only if it came from cloud)
         let uploadSuccess = false;
         if (this.storage && this.bucket) {
           try {
@@ -564,17 +611,27 @@ export class MileageCache {
 
           // If upload failed, show retry prompt
           if (!uploadSuccess) {
-            const shouldRetry = await this.showRetryPrompt(
-              'Unable to push database to cloud. Changes may be lost.',
-              'Would you like to retry upload or continue closing without saving to cloud?'
-            );
+            while (!uploadSuccess) {
+              const userChoice = await this.showRetryPrompt(
+                'Unable to push database to cloud. Changes may be lost.\n\nWould you like to retry upload or continue closing without saving to cloud?',
+                true // isUpload = true
+              );
 
-            if (shouldRetry) {
-              try {
-                uploadSuccess = await this.uploadDatabaseToCloud();
-              } catch (retryError) {
-                Logger.error('Retry upload failed:', retryError);
-                Logger.warn('Closing without cloud backup');
+              if (userChoice === 'retry') {
+                try {
+                  uploadSuccess = await this.uploadDatabaseToCloud();
+                  if (!uploadSuccess) {
+                    Logger.error('Retry upload failed');
+                  }
+                } catch (retryError) {
+                  Logger.error('Retry upload failed:', retryError);
+                }
+              } else if (userChoice === 'useLocal') {
+                Logger.warn('User chose to close without cloud backup');
+                break;
+              } else if (userChoice === 'cancel') {
+                Logger.info('User cancelled database close - keeping connection open');
+                return; // Don't close the database
               }
             }
           }
@@ -626,4 +683,7 @@ export const mileageCache = {
   getCachedMileage: (entry: MileageCacheEntry) => getMileageCache().getCachedMileage(entry),
   getCachedDeadMileage: (entry: MileageCacheEntry) => getMileageCache().getCachedDeadMileage(entry),
   getDatabaseMetadata: () => getMileageCache().getDatabaseMetadata(),
+  get isLocalDatabase() {
+    return getMileageCache().isLocalDatabase;
+  },
 };
