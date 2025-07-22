@@ -24,7 +24,8 @@ const config: ForgeConfig = {
        'package.json',
        'mappings',
        'reports',
-       'docs'
+       'docs',
+       'keys'
      ],
      icon: process.platform === 'darwin' ? 'src/img/LST_icon_mac.icns' : 'src/img/LST_icon_win.ico'
   },

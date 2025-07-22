@@ -7,6 +7,7 @@ import { Logger } from '../utils/logger';
 import { normalizeAddress, normalizeName } from '../utils/addressNormalizer';
 import { getShortestDistance } from '../adapters/googleMaps';
 import { UserInputMain } from '../utils/userInputMain';
+import { resolveFromExecutable } from '../utils/paths';
 
 // Constants
 const COMPANY_ADDRESS = "N5806 Co Rd M, Plymouth, WI 53073, USA";
@@ -107,13 +108,16 @@ export class MileageCache {
         throw new Error('GOOGLE_CLOUD_STORAGE_KEY environment variable not set');
       }
 
+      // Resolve the key path relative to the executable directory
+      const resolvedKeyPath = resolveFromExecutable(keyPath);
+
       // Check if key file exists
-      if (!fs.existsSync(keyPath)) {
-        throw new Error(`Google Cloud Storage key file not found: ${keyPath}`);
+      if (!fs.existsSync(resolvedKeyPath)) {
+        throw new Error(`Google Cloud Storage key file not found: ${resolvedKeyPath}`);
       }
 
       this.storage = new Storage({
-        keyFilename: keyPath,
+        keyFilename: resolvedKeyPath,
       });
 
       this.bucket = this.storage.bucket(GCS_BUCKET_NAME);
@@ -191,13 +195,37 @@ export class MileageCache {
 
       Logger.info('Uploading database to Google Cloud Storage...');
 
-      // Upload database file
+      // Upload database file using createWriteStream approach
       const dbFile = this.bucket.file(GCS_DB_FILENAME);
-      await dbFile.save(fs.readFileSync(this.dbPath));
+      const dbStream = dbFile.createWriteStream({
+        metadata: {
+          contentType: 'application/octet-stream',
+        },
+        resumable: false,
+      });
 
-      // Upload metadata
+      await new Promise<void>((resolve, reject) => {
+        const readStream = fs.createReadStream(this.dbPath);
+        readStream.pipe(dbStream)
+          .on('error', reject)
+          .on('finish', resolve);
+      });
+
+      // Upload metadata file
       const metadataFile = this.bucket.file(GCS_METADATA_FILENAME);
-      await metadataFile.save(fs.readFileSync(this.metadataPath));
+      const metadataStream = metadataFile.createWriteStream({
+        metadata: {
+          contentType: 'application/json',
+        },
+        resumable: false,
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        const readStream = fs.createReadStream(this.metadataPath);
+        readStream.pipe(metadataStream)
+          .on('error', reject)
+          .on('finish', resolve);
+      });
 
       Logger.info('Database uploaded to Google Cloud Storage successfully');
 
