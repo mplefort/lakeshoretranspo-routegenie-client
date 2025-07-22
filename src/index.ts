@@ -20,13 +20,99 @@ Logger.info(`Lakeshore Invoicer v${app.getVersion()}`);
 Logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 Logger.info(`Platform: ${process.platform} (${process.arch})`);
 
+// Setup macOS update checker
+const setupMacUpdateChecker = async (): Promise<void> => {
+  const { dialog } = require('electron');
+  const https = require('https');
+  
+  const checkForUpdates = async (): Promise<void> => {
+    try {
+      Logger.info('Checking for updates on GitHub releases...');
+      
+      // Fetch latest release from GitHub API
+      const options = {
+        hostname: 'api.github.com',
+        path: '/repos/mplefort/lakeshoretranspo-routegenie-client/releases/latest',
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Lakeshore-Invoicer-App'
+        }
+      };
+      
+      const req = https.request(options, (res: any) => {
+        let data = '';
+        
+        res.on('data', (chunk: any) => {
+          data += chunk;
+        });
+        
+        res.on('end', () => {
+          try {
+            const release = JSON.parse(data);
+            const latestVersion = release.tag_name;
+            const currentVersion = `v${app.getVersion()}`;
+            
+            Logger.info(`Current version: ${currentVersion}, Latest version: ${latestVersion}`);
+            
+            if (latestVersion !== currentVersion) {
+              Logger.info('New version available, showing update notification');
+              
+              // Show update notification dialog
+              dialog.showMessageBox({
+                type: 'info',
+                title: 'Update Available',
+                message: `A new version (${latestVersion}) is available!`,
+                detail: `You are currently running ${currentVersion}. Would you like to download the latest version?`,
+                buttons: ['Download Now', 'Remind Me Later', 'Skip This Version'],
+                defaultId: 0,
+                cancelId: 1
+              }).then((result: { response: number }) => {
+                if (result.response === 0) {
+                  // Open GitHub releases page
+                  shell.openExternal('https://github.com/mplefort/lakeshoretranspo-routegenie-client/releases');
+                }
+              });
+            } else {
+              Logger.info('Already running the latest version');
+            }
+          } catch (parseError) {
+            Logger.error('Failed to parse GitHub API response:', parseError);
+          }
+        });
+      });
+      
+      req.on('error', (error: any) => {
+        Logger.error('Failed to check for updates:', error);
+      });
+      
+      req.end();
+    } catch (error) {
+      Logger.error('Update check failed:', error);
+    }
+  };
+  
+  // Check for updates immediately
+  await checkForUpdates();
+  
+  // Set up periodic update checks (every 6 hours)
+  setInterval(checkForUpdates, 6 * 60 * 60 * 1000);
+};
+
 if (!process.env.NODE_ENV || process.env.NODE_ENV === 'production') {
   // log that updates are enabled
   Logger.info('Update checks enabled');
-  updateElectronApp({
-    updateInterval: '1 hour', // Check for updates every hour
-    logger: require('electron-log')
-  });
+  
+  if (process.platform === 'darwin') {
+    // On macOS, check for updates but don't auto-update due to signing requirements
+    Logger.info('macOS detected - using manual update notification');
+    setupMacUpdateChecker();
+  } else {
+    // On Windows and other platforms, use automatic updates
+    updateElectronApp({
+      updateInterval: '1 hour', // Check for updates every hour
+      logger: require('electron-log')
+    });
+  }
 } else {
   // In development mode, we don't want to check for updates
   Logger.info('Update checks disabled in development mode');
@@ -188,6 +274,13 @@ const createApplicationMenu = (): void => {
             });
           }
         },
+        ...(process.platform === 'darwin' ? [{
+          label: 'Check for Updates',
+          click: async () => {
+            // Manual update check for macOS
+            setupMacUpdateChecker();
+          }
+        }] : []),
         {
           label: 'Change Log',
           click: async () => {
