@@ -23,7 +23,8 @@ const config: ForgeConfig = {
      extraResource: [
        'package.json',
        'mappings',
-       'reports'
+       'reports',
+       'docs'
      ],
      icon: process.platform === 'darwin' ? 'src/img/LST_icon_mac' : 'src/img/LST_icon_win'
   },

@@ -187,6 +187,80 @@ const createApplicationMenu = (): void => {
               detail: 'Transportation invoicing application',
             });
           }
+        },
+        {
+          label: 'Change Log',
+          click: async () => {
+            try {
+              const path = require('path');
+              const fs = require('fs');
+              
+              // Get user data path (same pattern as used elsewhere in the app)
+              let userDataPath: string;
+              try {
+                userDataPath = app.getPath('userData');
+              } catch (error) {
+                // Fallback to OS-specific user data directories
+                const os = require('os');
+                const appName = 'lakeshore-invoicer';
+                switch (process.platform) {
+                  case 'win32':
+                    userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', appName);
+                    break;
+                  case 'darwin':
+                    userDataPath = path.join(os.homedir(), 'Library', 'Application Support', appName);
+                    break;
+                  case 'linux':
+                    userDataPath = path.join(os.homedir(), '.config', appName);
+                    break;
+                  default:
+                    userDataPath = path.join(os.homedir(), `.${appName}`);
+                }
+              }
+              
+              // Create ChangeLog directory in user data
+              const changelogDir = path.join(userDataPath, 'ChangeLog');
+              if (!fs.existsSync(changelogDir)) {
+                fs.mkdirSync(changelogDir, { recursive: true });
+              }
+              
+              const changelogUserPath = path.join(changelogDir, 'changelog.md');
+              
+              // Try to copy from app resources if it doesn't exist in user data or if source is newer
+              try {
+                const appPath = app.getAppPath();
+                const sourceChangelogPath = path.join(appPath, 'docs', 'changelog.md');
+                
+                // Check if source exists and copy it
+                if (fs.existsSync(sourceChangelogPath)) {
+                  const sourceStats = fs.statSync(sourceChangelogPath);
+                  let shouldCopy = true;
+                  
+                  if (fs.existsSync(changelogUserPath)) {
+                    const userStats = fs.statSync(changelogUserPath);
+                    shouldCopy = sourceStats.mtime > userStats.mtime;
+                  }
+                  
+                  if (shouldCopy) {
+                    fs.copyFileSync(sourceChangelogPath, changelogUserPath);
+                  }
+                }
+              } catch (copyError) {
+                console.log('Could not copy changelog from app resources:', copyError);
+              }
+              
+              // If we still don't have the file, create a basic one
+              if (!fs.existsSync(changelogUserPath)) {
+                const defaultContent = `# Change Log\n\nChangelog not found in application resources.\nPlease check the application documentation for updates.`;
+                fs.writeFileSync(changelogUserPath, defaultContent);
+              }
+              
+              // Open the changelog file
+              await shell.openPath(changelogUserPath);
+            } catch (error) {
+              console.error('Failed to open changelog:', error);
+            }
+          }
         }
       ]
     }
