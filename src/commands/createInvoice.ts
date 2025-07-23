@@ -4,10 +4,16 @@ import { generateBillingReport } from '../adapters/routeGenie';
 import { buildInvoices, flattenAggregatedResults, parseCsvRows, aggregateRows } from '../services/invoiceBuilder';
 import { loadQBServiceCodes, buildQBSyncFile } from '../services/qbSync';
 import { Logger } from '../utils/logger';
-import { UserInputMain } from '../utils/userInputMain';
 import { resolveFromExecutable, getExecutableDir } from '../utils/paths';
 import { parse as csvParse } from 'fast-csv';
 import { config } from 'dotenv';
+
+let dialog: any;
+try {
+  dialog = require('electron').dialog;
+} catch (error) {
+  // Electron not available
+}
 
 // Load environment variables
 config();
@@ -146,14 +152,19 @@ class createInvoice {
           Logger.error(`Mappings directory contents: ${fs.readdirSync(mappingsDir).join(', ')}`);
         }
 
-        // Example of using UserInput for error handling
+        // Example of using native dialog for error handling
         try {
-          const shouldContinue = await UserInputMain.confirm(
-            `QuickBooks service codes mapping file not found at:\n${qbCodesPath}\n\nWould you like to continue without generating the QuickBooks sync file?`,
-            'Missing QB Service Codes'
-          );
+          const result = await dialog.showMessageBox({
+            type: 'warning',
+            title: 'Missing QB Service Codes',
+            message: 'QuickBooks Service Codes Not Found',
+            detail: `QuickBooks service codes mapping file not found at:\n${qbCodesPath}\n\nWould you like to continue without generating the QuickBooks sync file?`,
+            buttons: ['Continue Without QB Sync', 'Cancel Process'],
+            defaultId: 0,
+            cancelId: 1
+          });
           
-          if (!shouldContinue) {
+          if (result.response === 1) { // Cancel Process
             throw new Error(`QuickBooks service codes mapping file not found: ${qbCodesPath}`);
           }
           
@@ -170,8 +181,8 @@ class createInvoice {
             message: successMessage,
             outputDir 
           };
-        } catch (userInputError) {
-          // If user input fails, fall back to original error
+        } catch (dialogError) {
+          // If native dialog fails, fall back to original error
           throw new Error(`QuickBooks service codes mapping file not found: ${qbCodesPath}`);
         }
       }

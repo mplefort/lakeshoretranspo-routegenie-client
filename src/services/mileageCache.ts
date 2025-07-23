@@ -6,8 +6,14 @@ import { Storage } from '@google-cloud/storage';
 import { Logger } from '../utils/logger';
 import { normalizeAddress, normalizeName } from '../utils/addressNormalizer';
 import { getShortestDistance } from '../adapters/googleMaps';
-import { UserInputMain } from '../utils/userInputMain';
 import { resolveFromExecutable } from '../utils/paths';
+
+let dialog: any;
+try {
+  dialog = require('electron').dialog;
+} catch (error) {
+  // Electron not available
+}
 
 // Constants
 const COMPANY_ADDRESS = "N5806 Co Rd M, Plymouth, WI 53073, USA";
@@ -271,31 +277,6 @@ export class MileageCache {
   }
 
   /**
-   * Show user prompt for retry or continue
-   */
-  private async showRetryPrompt(message: string, isUpload: boolean = false): Promise<'retry' | 'useLocal' | 'cancel'> {
-    try {
-      const buttons = [
-        { id: 'retry', label: 'Retry', variant: 'primary' as const },
-        { id: 'useLocal', label: isUpload ? 'Continue Without Backup' : 'Use Local', variant: 'secondary' as const },
-        { id: 'cancel', label: 'Cancel', variant: 'danger' as const }
-      ];
-
-      const response = await UserInputMain.showDialog({
-        title: 'Database Sync Issue',
-        message: message,
-        buttons
-      });
-      
-      return response.buttonId as 'retry' | 'useLocal' | 'cancel';
-    } catch (error) {
-      Logger.error('User input dialog error:', error);
-      // Default to use local if dialog fails
-      return 'useLocal';
-    }
-  }
-
-  /**
    * Get current database metadata
    */
   async getDatabaseMetadata(): Promise<DatabaseMetadata | null> {
@@ -339,14 +320,21 @@ export class MileageCache {
         Logger.error('Error during cloud download:', error);
       }
 
+
       // If download failed, show retry prompt
       if (!downloadSuccess && this.storage && this.bucket) {
         while (!downloadSuccess) {
-          const userChoice = await this.showRetryPrompt(
-            'Unable to pull database from cloud. Please check your internet connection.\n\nWould you like to retry download or continue with local database only?'
-          );
+          const result = await dialog.showMessageBox({
+            type: 'warning',
+            title: 'Database Sync Issue',
+            message: 'Unable to Download Database',
+            detail: 'Unable to pull database from cloud. Please check your internet connection.\n\nWould you like to retry download or continue with local database only?',
+            buttons: ['Retry', 'Use Local', 'Cancel Billing'],
+            defaultId: 0, // Default to "Retry"
+            cancelId: 2   // Cancel button index
+          });
 
-          if (userChoice === 'retry') {
+          if (result.response === 0) { // Retry
             try {
               downloadSuccess = await this.downloadDatabaseFromCloud();
               if (!downloadSuccess) {
@@ -355,16 +343,34 @@ export class MileageCache {
             } catch (retryError) {
               Logger.error('Retry download failed:', retryError);
             }
-          } else if (userChoice === 'useLocal') {
+          } else if (result.response === 1) { // Use Local
             Logger.warn('User chose to continue with local database only');
             this.isDbLocal = true; // Mark as local since user chose to use local
             break;
-          } else if (userChoice === 'cancel') {
+          } else if (result.response === 2) { // Cancel
             Logger.info('User cancelled database initialization');
             await this.close();
-            throw new Error('User canceled database initialization');
+            throw new Error('User canceled billing process - database initialization cancelled');
           }
         }
+      } else if (!this.storage || !this.bucket) {
+        const result = await dialog.showMessageBox({
+          type: 'warning',
+          title: 'Unable to Download Mileage Overwrite Database',
+          message: 'Cloud Storage Not Configured',
+          detail: 'Unable to download mileage overwrite database from cloud. The system will use local database only.\n\nWould you like to continue with local database or cancel the billing process?',
+          buttons: ['Continue with Local', 'Cancel Billing'],
+          defaultId: 0,
+          cancelId: 1
+        });
+
+        if (result.response === 1) {
+          Logger.info('User cancelled billing process due to cloud storage unavailability');
+          throw new Error('User canceled billing process - cloud storage not available');
+        }
+        
+        Logger.warn('User chose to continue with local database only - cloud storage not configured');
+        this.isDbLocal = true; // Mark as local since cloud storage isn't configured
       }
 
       // Connect to local database (either downloaded or existing)
@@ -613,10 +619,13 @@ export class MileageCache {
           
           // Show alert to user that database was not synced (always show if local, regardless of cloud init status)
           try {
-            await UserInputMain.alert(
-              'Database was not synchronized with cloud to prevent overwriting the cloud version.\n\nThis session used a local database only.',
-              'Database Not Synced'
-            );
+            await dialog.showMessageBox({
+              type: 'warning',
+              title: 'Database Not Synced',
+              message: 'Database Not Synced',
+              detail: 'Billing created successfully, but used local database for mileage overwrites and did not save to cloud. \n\n Please check wifi and restart app to sync overwrite database.',
+              buttons: ['OK']
+            });
           } catch (alertError) {
             Logger.warn(`Could not show sync alert to user: ${alertError}`);
           }
@@ -640,12 +649,17 @@ export class MileageCache {
           // If upload failed, show retry prompt
           if (!uploadSuccess) {
             while (!uploadSuccess) {
-              const userChoice = await this.showRetryPrompt(
-                'Unable to push database to cloud. Changes may be lost.\n\nWould you like to retry upload or continue closing without saving to cloud?',
-                true // isUpload = true
-              );
+              const result = await dialog.showMessageBox({
+                type: 'warning',
+                title: 'Database Sync Issue',
+                message: 'Unable to Upload Database',
+                detail: 'Unable to push database to cloud. Changes may be lost.\n\nWould you like to retry upload or continue closing without saving to cloud?',
+                buttons: ['Retry', 'Continue Without Backup', 'Cancel'],
+                defaultId: 0, // Default to "Retry"
+                cancelId: 2   // Cancel button index
+              });
 
-              if (userChoice === 'retry') {
+              if (result.response === 0) { // Retry
                 try {
                   uploadSuccess = await this.uploadDatabaseToCloud();
                   if (!uploadSuccess) {
@@ -654,10 +668,10 @@ export class MileageCache {
                 } catch (retryError) {
                   Logger.error('Retry upload failed:', retryError);
                 }
-              } else if (userChoice === 'useLocal') {
+              } else if (result.response === 1) { // Continue Without Backup
                 Logger.warn('User chose to close without cloud backup');
                 break;
-              } else if (userChoice === 'cancel') {
+              } else if (result.response === 2) { // Cancel
                 Logger.info('User cancelled database close - keeping connection open');
                 return; // Don't close the database
               }

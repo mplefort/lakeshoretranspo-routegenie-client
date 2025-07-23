@@ -1,6 +1,5 @@
 import { app, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { createInvoice, BillingWorkflowFormInputs } from './commands/createInvoice';
-import { UserInputMain } from './utils/userInputMain';
 import { updateElectronApp } from 'update-electron-app';
 import { Logger } from './utils/logger';
 
@@ -415,8 +414,7 @@ app.on('activate', () => {
 // Set up IPC handlers
 const setupIpcHandlers = () => {
   
-  // Initialize UserInput system
-  UserInputMain.initialize();
+
 
   // Existing QB sync handler
   ipcMain.handle('qb:sync', async (event, data: any) => {
