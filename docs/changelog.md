@@ -10,6 +10,11 @@
 5. Overwrite_miles and overwrite_dead_miles will always be billed with no other logic overwriting them.
 6. Private Pay Nursing Homes:
 
+## V1.0.12
+- Mac version manual update process added
+
+## V1.0.11
+- Mac version added
 
 ## V1.0.10
 - Google Cloud Storage integration for mileage cache database
