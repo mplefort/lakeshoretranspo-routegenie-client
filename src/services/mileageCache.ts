@@ -433,6 +433,26 @@ export class MileageCache {
   }
 
   /**
+   * Get all cache entries
+   */
+  async getAllEntries(): Promise<MileageCacheEntry[]> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    try {
+      const sql = 'SELECT * FROM mileage_cache ORDER BY created_at DESC';
+      const stmt = this.db!.prepare(sql);
+      const rows = stmt.all() as MileageCacheEntry[];
+      
+      return rows;
+    } catch (err) {
+      Logger.error('Error getting all mileage cache entries:', err);
+      throw err;
+    }
+  }
+
+  /**
    * Find an existing cache entry
    */
   async findCacheEntry(params: CacheQueryParams): Promise<MileageCacheEntry | null> {
@@ -722,6 +742,8 @@ export const mileageCache = {
   findCacheEntry: (params: CacheQueryParams) => getMileageCache().findCacheEntry(params),
   createCacheEntry: (params: CacheQueryParams, rgMiles: number, rgDeadMiles: number) => 
     getMileageCache().createCacheEntry(params, rgMiles, rgDeadMiles),
+  getAllEntries: () => getMileageCache().getAllEntries(),
+  updateCacheEntry: (id: number, updates: Partial<MileageCacheEntry>) => getMileageCache().updateCacheEntry(id, updates),
   getCachedMileage: (entry: MileageCacheEntry) => getMileageCache().getCachedMileage(entry),
   getCachedDeadMileage: (entry: MileageCacheEntry) => getMileageCache().getCachedDeadMileage(entry),
   getDatabaseMetadata: () => getMileageCache().getDatabaseMetadata(),

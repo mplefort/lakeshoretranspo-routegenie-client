@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import BillingWorkflowModule from './modules/BillingWorkflowModule';
+import MileageDbEditor from './modules/MileageDbEditor';
 import UserInputDialog from './common/UserInputDialog';
 import { useUserInputDialog } from './common/useUserInputDialog';
 import { BillingWorkflowFormInputs } from '../types/electron';
 
 const App: React.FC = () => {
   const [showBillingForm, setShowBillingForm] = useState<boolean>(false);
+  const [showMileageEditor, setShowMileageEditor] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [lastResult, setLastResult] = useState<{ success: boolean; message: string } | null>(null);
   
@@ -14,6 +16,11 @@ const App: React.FC = () => {
 
   const handleCreateBilling = () => {
     setShowBillingForm(true);
+    setLastResult(null); // Clear previous results
+  };
+
+  const handleMileageEditor = () => {
+    setShowMileageEditor(true);
     setLastResult(null); // Clear previous results
   };
 
@@ -43,6 +50,11 @@ const App: React.FC = () => {
 
   const handleBillingCancel = () => {
     setShowBillingForm(false);
+    setLastResult(null);
+  };
+
+  const handleMileageEditorClose = () => {
+    setShowMileageEditor(false);
     setLastResult(null);
   };
 
@@ -201,7 +213,8 @@ const App: React.FC = () => {
             cursor: 'pointer',
             boxShadow: 'var(--shadow-light)',
             transition: 'all 0.2s ease',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            marginBottom: '15px'
           }}
           onMouseOver={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
@@ -213,6 +226,32 @@ const App: React.FC = () => {
           }}
         >
           Create Billing Invoice
+        </button>
+
+        <button
+          onClick={handleMileageEditor}
+          style={{
+            padding: '15px 30px',
+            borderRadius: '8px',
+            border: `2px solid var(--accent-teal)`,
+            backgroundColor: 'var(--accent-teal)',
+            color: 'var(--primary-white)',
+            fontSize: '1.2rem',
+            cursor: 'pointer',
+            boxShadow: 'var(--shadow-light)',
+            transition: 'all 0.2s ease',
+            fontWeight: 'bold'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.backgroundColor = 'var(--primary-blue)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.backgroundColor = 'var(--accent-teal)';
+          }}
+        >
+          Mileage DB Editor
         </button>
 
         <div style={{
@@ -278,6 +317,13 @@ const App: React.FC = () => {
           onSubmit={handleBillingSubmit}
           onCancel={handleBillingCancel}
           isProcessing={isProcessing}
+        />
+      )}
+
+      {showMileageEditor && (
+        <MileageDbEditor
+          onClose={handleMileageEditorClose}
+          onResult={setLastResult}
         />
       )}
 

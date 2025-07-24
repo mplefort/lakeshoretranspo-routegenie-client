@@ -55,6 +55,12 @@ export interface IElectronAPI {
     execute: (inputs: BillingWorkflowFormInputs) => Promise<BillingWorkflowResult>;
   };
   
+  // Mileage Cache operations
+  mileageCache: {
+    getAllEntries: () => Promise<{ success: boolean; data?: any[]; message?: string }>;
+    updateEntries: (entries: any[]) => Promise<{ success: boolean; message: string }>;
+  };
+  
   // QB Sync operations
   qb: {
     sync: (data: any) => Promise<any>;

@@ -10,6 +10,10 @@
 5. Overwrite_miles and overwrite_dead_miles will always be billed with no other logic overwriting them.
 6. Private Pay Nursing Homes:
 
+## V1.0.13
+- Refactored menu callback functions into organized MenuFunctions object for better code maintainability
+- Added Mileage Database Editor with full-screen table interface for viewing and editing mileage cache records
+
 ## V1.0.12
 - Mac version manual update process added
 
