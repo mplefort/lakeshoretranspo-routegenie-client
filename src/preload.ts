@@ -18,6 +18,10 @@ const electronAPI: IElectronAPI = {
   billingWorkflow: {
     execute: (inputs: BillingWorkflowFormInputs) => ipcRenderer.invoke('billingWorkflow:execute', inputs),
   },
+  mileageCache: {
+    getAllEntries: () => ipcRenderer.invoke('mileageCache:getAllEntries'),
+    updateEntries: (entries: any[]) => ipcRenderer.invoke('mileageCache:updateEntries', entries),
+  },
   qb: {
     sync: (data: any) => ipcRenderer.invoke('qb:sync', data),
   },

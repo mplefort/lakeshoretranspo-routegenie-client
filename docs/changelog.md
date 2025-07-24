@@ -12,6 +12,7 @@
 
 ## V1.0.13
 - Refactored menu callback functions into organized MenuFunctions object for better code maintainability
+- Added Mileage Database Editor with full-screen table interface for viewing and editing mileage cache records
 
 ## V1.0.12
 - Mac version manual update process added

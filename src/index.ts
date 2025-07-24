@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { createInvoice, BillingWorkflowFormInputs } from './commands/createInvoice';
+import { getMileageCache } from './services/mileageCache';
 import { updateElectronApp } from 'update-electron-app';
 import { Logger } from './utils/logger';
 import { getUserDataPath } from './utils/paths';
@@ -426,6 +427,46 @@ const setupIpcHandlers = () => {
   ipcMain.handle('shell:openMileageCacheFolder', async () => {
     console.log('Opening mileage cache folder');
     await MenuFunctions.openMileageCacheFolder();
+  });
+
+  // Mileage cache operations
+  ipcMain.handle('mileageCache:getAllEntries', async () => {
+    console.log('Getting all mileage cache entries');
+    try {
+      const mileageCache = getMileageCache();
+      const rows = await mileageCache.getAllEntries();
+      
+      return { success: true, data: rows };
+    } catch (error: any) {
+      console.error('Error getting mileage cache entries:', error);
+      return { success: false, message: error.message || String(error) };
+    }
+  });
+
+  ipcMain.handle('mileageCache:updateEntries', async (event, entries: any[]) => {
+    console.log('Updating mileage cache entries:', entries.length);
+    try {
+      const mileageCache = getMileageCache();
+      await mileageCache.initialize();
+      
+      // Update each entry
+      for (const entry of entries) {
+        if (entry.id) {
+          await mileageCache.updateCacheEntry(entry.id, {
+            overwrite_miles: entry.overwrite_miles,
+            overwrite_dead_miles: entry.overwrite_dead_miles
+          });
+        }
+      }
+      
+      // Close the cache to trigger cloud sync
+      await mileageCache.close();
+      
+      return { success: true, message: 'Entries updated successfully and synced to cloud' };
+    } catch (error: any) {
+      console.error('Error updating mileage cache entries:', error);
+      return { success: false, message: error.message || String(error) };
+    }
   });
 };
 
