@@ -1,7 +1,7 @@
 {
   "name": "lakeshoretranspo-routegenie-client",
   "productName": "Lakeshore Invoicer",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Lakeshore Transportation invoicing application",
   "main": ".webpack/main",
   "scripts": {

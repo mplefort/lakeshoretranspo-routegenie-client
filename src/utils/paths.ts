@@ -1,4 +1,34 @@
 import path from 'path';
+import os from 'os';
+
+/**
+ * Get the user data directory path for storing persistent data
+ */
+export function getUserDataPath(): string {
+  try {
+    // Try to get Electron's user data path
+    const { app } = require('electron');
+    if (app && app.getPath) {
+      return app.getPath('userData');
+    }
+  } catch (error) {
+    // Electron not available, fallback to OS-specific user data directories
+  }
+
+  // Fallback to OS-specific user data directories
+  const appName = 'lakeshore-invoicer';
+  
+  switch (process.platform) {
+    case 'win32':
+      return path.join(os.homedir(), 'AppData', 'Roaming', appName);
+    case 'darwin':
+      return path.join(os.homedir(), 'Library', 'Application Support', appName);
+    case 'linux':
+      return path.join(os.homedir(), '.config', appName);
+    default:
+      return path.join(os.homedir(), `.${appName}`);
+  }
+}
 
 /**
  * Gets the directory where the executable is located.
